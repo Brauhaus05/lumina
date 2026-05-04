@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@lumina/db/server';
+import { createServiceRoleClient } from '@lumina/db/server';
 import { getPosts } from '@lumina/db/queries';
 import { PostStatus } from '@lumina/types';
 
 export default async function PostsPage() {
   const tenantId = process.env['DEV_TENANT_ID'] ?? '';
-  const client = await createServerSupabaseClient();
+  const client = await createServiceRoleClient();
   const posts = await getPosts(client, tenantId);
 
   return (

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@lumina/db/server';
+import { createServiceRoleClient } from '@lumina/db/server';
 import { getPosts } from '@lumina/db/queries';
 import { PostStatus } from '@lumina/types';
 
@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   // In a real app, tenant_id comes from the authenticated user's JWT
   // For now, we read from env as a dev placeholder
   const tenantId = process.env['DEV_TENANT_ID'] ?? '';
-  const client = await createServerSupabaseClient();
+  const client = await createServiceRoleClient();
 
   const [allPosts, publishedPosts] = await Promise.all([
     getPosts(client, tenantId),
