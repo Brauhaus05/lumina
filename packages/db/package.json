@@ -1,0 +1,29 @@
+{
+  "name": "@lumina/db",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./queries": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lumina/types": "workspace:*",
+    "@supabase/ssr": "^0.10",
+    "@supabase/supabase-js": "^2"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "next": ">=15"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  }
+}

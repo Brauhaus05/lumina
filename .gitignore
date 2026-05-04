@@ -1,0 +1,25 @@
+node_modules/
+.next/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+packages/sdk/dist/stats.html

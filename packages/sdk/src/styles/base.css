@@ -1,0 +1,96 @@
+/* Base styles scoped to Shadow DOM — generated statically, not from Tailwind CDN.
+   Injected via adoptedStyleSheets so they only apply inside the shadow root. */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+  font-family: var(--lumina-font-family, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--lumina-font-size, 16px);
+  color: var(--lumina-color-text, #111827);
+  background-color: var(--lumina-color-background, #ffffff);
+  line-height: 1.6;
+}
+
+.lumina-container {
+  max-width: 65ch;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.lumina-post-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lumina-post-item {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.lumina-post-item:last-child {
+  border-bottom: none;
+}
+
+.lumina-post-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--lumina-color-primary, #1d4ed8);
+  text-decoration: none;
+}
+
+.lumina-post-title:hover {
+  text-decoration: underline;
+}
+
+.lumina-post-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.lumina-content h1, .lumina-content h2, .lumina-content h3 {
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.lumina-content h1 { font-size: 2rem; }
+.lumina-content h2 { font-size: 1.5rem; }
+.lumina-content h3 { font-size: 1.25rem; }
+
+.lumina-content p { margin-bottom: 1rem; }
+
+.lumina-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.lumina-content pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+}
+
+.lumina-content blockquote {
+  border-left: 4px solid var(--lumina-color-primary, #1d4ed8);
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #4b5563;
+  font-style: italic;
+}
+
+.lumina-content hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 2rem 0;
+}

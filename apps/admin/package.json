@@ -1,0 +1,32 @@
+{
+  "name": "@lumina/admin",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@lumina/types": "workspace:*",
+    "@lumina/db": "workspace:*",
+    "@lumina/editor": "workspace:*",
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19",
+    "cloudinary": "^2",
+    "@supabase/ssr": "^0.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "^15"
+  }
+}

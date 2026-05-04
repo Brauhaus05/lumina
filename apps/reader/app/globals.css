@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+body {
+  background-color: var(--lumina-color-background, #ffffff);
+  color: var(--lumina-color-text, #111827);
+  font-family: var(--lumina-font-family, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--lumina-font-size, 16px);
+  -webkit-font-smoothing: antialiased;
+}
+
+.lumina-content {
+  max-width: 65ch;
+  margin: 0 auto;
+}
