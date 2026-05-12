@@ -2,66 +2,75 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { LuminaEditor } from '@lumina/editor';
 import { savePostAction, publishPostAction, unpublishPostAction } from '../app/posts/[id]/actions';
 import { PostStatus } from '@lumina/types';
-import type { Post, TiptapDocument } from '@lumina/types';
+import type { Post, PostSeoMetadata, TiptapDocument } from '@lumina/types';
 
 interface Props {
   post?: Post;
   tenantId: string;
 }
 
-type SaveSignal = 'idle' | 'saving' | 'saved' | 'error';
-
 export function PostEditor({ post, tenantId }: Props) {
   const router = useRouter();
   const [currentPost, setCurrentPost] = useState<Post | undefined>(post);
   const [title, setTitle] = useState(post?.title ?? '');
   const [slug, setSlug] = useState(post?.slug ?? '');
-  const [saveSignal, setSaveSignal] = useState<SaveSignal>('idle');
+  const [seoMetadata, setSeoMetadata] = useState<PostSeoMetadata>(
+    post?.seo_metadata ?? {},
+  );
 
   const handleSave = useCallback(
     async (doc: TiptapDocument) => {
       if (!title.trim()) return;
       const computedSlug = slug.trim() || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-      setSaveSignal('saving');
       const result = await savePostAction(
         currentPost?.id ?? null,
         tenantId,
         title,
         computedSlug,
         doc,
+        seoMetadata,
       );
 
       if (result.success) {
         setCurrentPost(result.data);
         setSlug(result.data.slug);
-        setSaveSignal('saved');
+        toast.success('Draft saved');
         if (!currentPost) {
           router.replace(`/posts/${result.data.id}`);
         }
       } else {
-        setSaveSignal('error');
+        toast.error('Failed to save');
       }
     },
-    [title, slug, currentPost, tenantId, router],
+    [title, slug, seoMetadata, currentPost, tenantId, router],
   );
 
   const handlePublish = useCallback(async () => {
     if (!currentPost) return;
-    const result = await publishPostAction(
-      currentPost.id,
-      currentPost.content,
-    );
-    if (result.success) setCurrentPost(result.data);
+    const result = await publishPostAction(currentPost.id, currentPost.content);
+    if (result.success) {
+      setCurrentPost(result.data);
+      toast.success('Post published');
+    } else {
+      toast.error('Failed to publish');
+    }
   }, [currentPost]);
 
   const handleUnpublish = useCallback(async () => {
     if (!currentPost) return;
     const result = await unpublishPostAction(currentPost.id);
-    if (result.success) setCurrentPost(result.data);
+    if (result.success) {
+      setCurrentPost(result.data);
+      toast('Post unpublished');
+    } else {
+      toast.error('Failed to unpublish');
+    }
   }, [currentPost]);
 
   const isPublished = currentPost?.status === PostStatus.PUBLISHED;
@@ -73,11 +82,11 @@ export function PostEditor({ post, tenantId }: Props) {
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push('/posts')}
-            className="text-sm text-zinc-500 hover:text-zinc-300"
+            className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300"
           >
-            ← Posts
+            <ArrowLeft className="size-3.5" />
+            Posts
           </button>
-          <SaveIndicator signal={saveSignal} />
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -86,7 +95,7 @@ export function PostEditor({ post, tenantId }: Props) {
             className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-40 ${
               isPublished
                 ? 'border border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                : 'bg-indigo-500 text-white hover:bg-indigo-400'
+                : 'bg-primary text-primary-foreground hover:bg-primary/80'
             }`}
           >
             {isPublished ? 'Unpublish' : 'Publish'}
@@ -119,24 +128,58 @@ export function PostEditor({ post, tenantId }: Props) {
           onSave={handleSave}
           uploadEndpoint="/api/upload"
         />
+
+        {/* SEO Panel */}
+        <details className="mt-12 border-t border-zinc-800 pt-6">
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-widest text-zinc-500 hover:text-zinc-300">
+            SEO Settings
+          </summary>
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="mb-1 block text-xs text-zinc-400">
+                Meta description
+                <span className="ml-1 text-zinc-600">
+                  ({(seoMetadata.meta_description ?? '').length}/160)
+                </span>
+              </label>
+              <textarea
+                value={seoMetadata.meta_description ?? ''}
+                onChange={(e) =>
+                  setSeoMetadata((prev) => ({ ...prev, meta_description: e.target.value.slice(0, 160) }))
+                }
+                rows={3}
+                placeholder="Brief description shown in search results…"
+                className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-zinc-400">OG title override</label>
+              <input
+                type="text"
+                value={seoMetadata.og_title ?? ''}
+                onChange={(e) =>
+                  setSeoMetadata((prev) => ({ ...prev, og_title: e.target.value }))
+                }
+                placeholder="Defaults to post title"
+                className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-zinc-400">OG image URL</label>
+              <input
+                type="url"
+                value={seoMetadata.og_image ?? ''}
+                onChange={(e) =>
+                  setSeoMetadata((prev) => ({ ...prev, og_image: e.target.value }))
+                }
+                placeholder="https://res.cloudinary.com/…"
+                className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+        </details>
       </div>
     </div>
   );
 }
 
-function SaveIndicator({ signal }: { signal: SaveSignal }) {
-  const labels: Record<SaveSignal, string> = {
-    idle: '',
-    saving: 'Saving…',
-    saved: 'Saved',
-    error: 'Save failed',
-  };
-  const colors: Record<SaveSignal, string> = {
-    idle: '',
-    saving: 'text-zinc-500',
-    saved: 'text-emerald-500',
-    error: 'text-red-500',
-  };
-  if (signal === 'idle') return null;
-  return <span className={`text-xs ${colors[signal]}`}>{labels[signal]}</span>;
-}

@@ -3,10 +3,13 @@ import { headers } from 'next/headers';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { Inter } from 'next/font/google';
 import { getTenantBySubdomain, getSettings } from '@lumina/db/queries';
 import { resolveToCssVars } from '@lumina/reader';
 import type { Database } from '@lumina/types';
 import './globals.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 // Cached tenant resolution — runs once per request, shared across the layout tree
 const getTenant = cache(async (subdomain: string) => {
@@ -49,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const themeVars = settings ? resolveToCssVars(settings.theme_config) : '';
 
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <head>
         {themeVars && <style dangerouslySetInnerHTML={{ __html: themeVars }} />}
       </head>

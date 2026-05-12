@@ -6,10 +6,12 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import HorizontalRule from '@tiptap/extension-horizontal-rule';
+import LinkExtension from '@tiptap/extension-link';
 import { common, createLowlight } from 'lowlight';
 import type { TiptapDocument } from '@lumina/types';
 import { useAutoSave } from './hooks/useAutoSave';
 import { createSlashCommandExtension } from './extensions/SlashCommand';
+import { BubbleToolbar } from './components/BubbleToolbar';
 
 const lowlight = createLowlight(common);
 
@@ -30,6 +32,7 @@ export function LuminaEditor({ initialContent, onSave, uploadEndpoint }: Props) 
       Image.configure({ allowBase64: false }),
       CodeBlockLowlight.configure({ lowlight }),
       HorizontalRule,
+      LinkExtension.configure({ openOnClick: false }),
       createSlashCommandExtension(uploadEndpoint),
     ],
     // null satisfies Content; undefined is rejected by exactOptionalPropertyTypes
@@ -48,6 +51,7 @@ export function LuminaEditor({ initialContent, onSave, uploadEndpoint }: Props) 
 
   return (
     <div className="lumina-editor">
+      {editor && <BubbleToolbar editor={editor} />}
       <p className="mb-2 text-xs text-zinc-600">
         Type <kbd className="rounded bg-zinc-800 px-1">/</kbd> for commands
         {saveSignal === 'saving' && <span className="ml-3 text-zinc-500">Saving…</span>}

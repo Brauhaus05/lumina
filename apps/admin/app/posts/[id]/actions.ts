@@ -3,7 +3,7 @@
 import { createServiceRoleClient } from '@lumina/db/server';
 import { createPost, updatePost, publishPost, unpublishPost } from '@lumina/db/queries';
 import { PostStatus } from '@lumina/types';
-import type { ActionResult, Post, TiptapDocument } from '@lumina/types';
+import type { ActionResult, Post, PostSeoMetadata, TiptapDocument } from '@lumina/types';
 
 function isTiptapDocument(value: unknown): value is TiptapDocument {
   return (
@@ -20,6 +20,7 @@ export async function savePostAction(
   title: string,
   slug: string,
   content: TiptapDocument,
+  seoMetadata?: PostSeoMetadata | null,
 ): Promise<ActionResult<Post>> {
   try {
     if (!isTiptapDocument(content)) {
@@ -35,7 +36,12 @@ export async function savePostAction(
     const client = await createServiceRoleClient();
 
     if (postId) {
-      const post = await updatePost(client, postId, { title, slug, content });
+      const post = await updatePost(client, postId, {
+        title,
+        slug,
+        content,
+        ...(seoMetadata !== undefined && { seo_metadata: seoMetadata }),
+      });
       return { success: true, data: post };
     } else {
       const post = await createPost(client, {
@@ -44,6 +50,7 @@ export async function savePostAction(
         slug,
         content,
         status: PostStatus.DRAFT,
+        ...(seoMetadata !== undefined && { seo_metadata: seoMetadata }),
       });
       return { success: true, data: post };
     }

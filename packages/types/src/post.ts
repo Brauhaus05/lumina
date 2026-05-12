@@ -19,6 +19,12 @@ export type TiptapDocument = {
   content: TiptapNode[];
 };
 
+export interface PostSeoMetadata {
+  meta_description?: string;
+  og_title?: string;
+  og_image?: string;
+}
+
 export interface Post {
   id: string;
   tenant_id: string;
@@ -26,6 +32,7 @@ export interface Post {
   slug: string;
   content: TiptapDocument;
   status: PostStatusValue;
+  seo_metadata?: PostSeoMetadata | null;
   created_at: string;
   updated_at: string;
 }

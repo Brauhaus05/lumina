@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { Plus, FileText } from 'lucide-react';
 import { createServiceRoleClient } from '@lumina/db/server';
 import { getPosts } from '@lumina/db/queries';
 import { PostStatus } from '@lumina/types';
+import { Badge } from '@/components/ui/badge';
 
 export default async function DashboardPage() {
   // In a real app, tenant_id comes from the authenticated user's JWT
@@ -23,16 +25,17 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white">Lumina</h1>
         <Link
           href="/posts/new"
-          className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-400"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
         >
+          <Plus className="size-4" />
           New Post
         </Link>
       </header>
 
-      {/* Bento Grid */}
-      <div className="grid grid-cols-4 grid-rows-3 gap-4">
-        {/* Recent Activity — spans 2 cols × 2 rows */}
-        <section className="col-span-2 row-span-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      {/* Bento Grid — 1 col mobile → 2 col sm → 4 col lg */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Recent Activity — full width mobile, 2×2 on lg */}
+        <section className="min-h-48 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 sm:col-span-2 lg:row-span-2">
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-400">
             Recent Posts
           </h2>
@@ -46,18 +49,18 @@ export default async function DashboardPage() {
                     href={`/posts/${post.id}`}
                     className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-zinc-800"
                   >
-                    <span className="truncate text-sm font-medium text-zinc-100">
-                      {post.title}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <FileText className="size-3.5 shrink-0 text-zinc-500" />
+                      <span className="truncate text-sm font-medium text-zinc-100">
+                        {post.title}
+                      </span>
                     </span>
-                    <span
-                      className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        post.status === PostStatus.PUBLISHED
-                          ? 'bg-emerald-900 text-emerald-300'
-                          : 'bg-zinc-700 text-zinc-300'
-                      }`}
+                    <Badge
+                      variant={post.status === PostStatus.PUBLISHED ? 'default' : 'secondary'}
+                      className="ml-3 shrink-0"
                     >
                       {post.status}
-                    </span>
+                    </Badge>
                   </Link>
                 </li>
               ))}
@@ -66,13 +69,13 @@ export default async function DashboardPage() {
         </section>
 
         {/* Draft Count */}
-        <section className="col-span-1 row-span-1 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">Drafts</p>
           <p className="mt-2 text-5xl font-bold text-white">{draftCount}</p>
         </section>
 
         {/* Published Count */}
-        <section className="col-span-1 row-span-1 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
             Published
           </p>
@@ -80,26 +83,26 @@ export default async function DashboardPage() {
         </section>
 
         {/* Quick Compose */}
-        <section className="col-span-1 row-span-1 rounded-2xl border border-indigo-800 bg-indigo-950 p-6">
-          <Link href="/posts/new" className="flex h-full flex-col justify-between">
+        <section className="rounded-2xl border border-indigo-800 bg-indigo-950 p-6">
+          <Link href="/posts/new" className="flex h-full min-h-24 flex-col justify-between">
             <p className="text-xs font-semibold uppercase tracking-widest text-indigo-400">
               Quick Compose
             </p>
-            <span className="text-3xl text-indigo-300">+</span>
+            <Plus className="size-8 text-indigo-300" />
           </Link>
         </section>
 
         {/* Media Library */}
-        <section className="col-span-1 row-span-1 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">Media</p>
           <p className="mt-2 text-sm text-zinc-500">Library</p>
         </section>
 
         {/* All Posts Link */}
-        <section className="col-span-2 row-span-1 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 sm:col-span-2">
           <Link
             href="/posts"
-            className="flex h-full items-center justify-between text-sm text-zinc-300 hover:text-white"
+            className="flex h-full min-h-10 items-center justify-between text-sm text-zinc-300 hover:text-white"
           >
             <span>View all posts →</span>
             <span className="text-zinc-500">{allPosts.length} total</span>
