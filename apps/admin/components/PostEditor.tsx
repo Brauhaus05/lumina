@@ -9,17 +9,17 @@ import type { Post, TiptapDocument } from '@lumina/types';
 
 interface Props {
   post?: Post;
+  tenantId: string;
 }
 
 type SaveSignal = 'idle' | 'saving' | 'saved' | 'error';
 
-export function PostEditor({ post }: Props) {
+export function PostEditor({ post, tenantId }: Props) {
   const router = useRouter();
   const [currentPost, setCurrentPost] = useState<Post | undefined>(post);
   const [title, setTitle] = useState(post?.title ?? '');
   const [slug, setSlug] = useState(post?.slug ?? '');
   const [saveSignal, setSaveSignal] = useState<SaveSignal>('idle');
-  const tenantId = process.env['NEXT_PUBLIC_DEV_TENANT_ID'] ?? '';
 
   const handleSave = useCallback(
     async (doc: TiptapDocument) => {

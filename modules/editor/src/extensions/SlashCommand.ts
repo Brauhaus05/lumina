@@ -1,5 +1,12 @@
 import { Extension } from '@tiptap/core';
 import type { Editor, Range } from '@tiptap/core';
+import Suggestion from '@tiptap/suggestion';
+import type { SuggestionOptions, SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
+import { ReactRenderer } from '@tiptap/react';
+import tippy from 'tippy.js';
+import type { Instance as TippyInstance } from 'tippy.js';
+import { SlashMenu } from '../components/SlashMenu';
+import type { SlashMenuHandle } from '../components/SlashMenu';
 
 export interface SlashCommandItem {
   label: string;
@@ -7,25 +14,52 @@ export interface SlashCommandItem {
   command: (props: { editor: Editor; range: Range }) => void;
 }
 
-// The Extension adds a suggestion plugin that intercepts '/' keypresses
-export const SlashCommand = Extension.create({
-  name: 'slashCommand',
+function buildRenderer() {
+  let component: ReactRenderer<SlashMenuHandle> | null = null;
+  let popup: TippyInstance[] | null = null;
 
-  addOptions() {
-    return {
-      suggestion: {
-        char: '/',
-        command: ({ editor, range, props }: { editor: Editor; range: Range; props: { command: SlashCommandItem['command'] } }) => {
-          props.command({ editor, range });
-        },
-      },
-    };
-  },
+  return {
+    onStart(props: SuggestionProps<SlashCommandItem>) {
+      component = new ReactRenderer(SlashMenu, {
+        props: { items: props.items, command: props.command },
+        editor: props.editor,
+      });
 
-  addProseMirrorPlugins() {
-    return [];
-  },
-});
+      if (!props.clientRect) return;
+
+      popup = tippy('body', {
+        getReferenceClientRect: props.clientRect as () => DOMRect,
+        appendTo: () => document.body,
+        content: component.element,
+        showOnCreate: true,
+        interactive: true,
+        trigger: 'manual',
+        placement: 'bottom-start',
+      });
+    },
+
+    onUpdate(props: SuggestionProps<SlashCommandItem>) {
+      component?.updateProps({ items: props.items, command: props.command });
+      if (!props.clientRect) return;
+      popup?.[0]?.setProps({ getReferenceClientRect: props.clientRect as () => DOMRect });
+    },
+
+    onKeyDown(props: SuggestionKeyDownProps): boolean {
+      if (props.event.key === 'Escape') {
+        popup?.[0]?.hide();
+        return true;
+      }
+      return component?.ref?.onKeyDown(props) ?? false;
+    },
+
+    onExit() {
+      popup?.[0]?.destroy();
+      component?.destroy();
+      component = null;
+      popup = null;
+    },
+  };
+}
 
 export function buildSlashItems(uploadEndpoint: string): SlashCommandItem[] {
   return [
@@ -84,7 +118,6 @@ export function buildSlashItems(uploadEndpoint: string): SlashCommandItem[] {
           if (!res.ok) return;
 
           const { url } = (await res.json()) as { url: string };
-          // Append Cloudinary auto format/quality transformation
           const deliveryUrl = url.replace('/upload/', '/upload/f_auto,q_auto/');
           editor.chain().focus().setImage({ src: deliveryUrl }).run();
         };
@@ -92,6 +125,33 @@ export function buildSlashItems(uploadEndpoint: string): SlashCommandItem[] {
       },
     },
   ];
+}
+
+export function createSlashCommandExtension(uploadEndpoint: string) {
+  const items = buildSlashItems(uploadEndpoint);
+
+  return Extension.create<{ suggestion: Partial<SuggestionOptions<SlashCommandItem>> }>({
+    name: 'slashCommand',
+
+    addOptions() {
+      return { suggestion: {} };
+    },
+
+    addProseMirrorPlugins() {
+      return [
+        Suggestion<SlashCommandItem>({
+          editor: this.editor,
+          char: '/',
+          items: ({ query }) =>
+            items.filter((item) =>
+              item.label.toLowerCase().includes(query.toLowerCase()),
+            ),
+          command: ({ editor, range, props }) => props.command({ editor, range }),
+          render: buildRenderer,
+        }),
+      ];
+    },
+  });
 }
 
 export type { Editor, Range };

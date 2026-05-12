@@ -1,8 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'preact/hooks';
 import DOMPurify, { type Config } from 'dompurify';
-import type { Post } from '@lumina/types';
 import { fetchPosts } from './api';
-import type { SdkApiOptions } from './api';
+import type { SdkApiOptions, SdkPost } from './api';
 
 interface Props extends SdkApiOptions {
   view?: 'list' | 'post';
@@ -16,7 +17,7 @@ const PURIFY_CONFIG: Config = {
 };
 
 export function LuminaApp({ apiUrl, apiKey }: Props) {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<SdkPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
@@ -48,11 +49,9 @@ export function LuminaApp({ apiUrl, apiKey }: Props) {
     const post = posts.find((p) => p.slug === activeSlug);
     if (!post) return null;
 
-    // Defense in depth: Reader already sanitized, but sanitize again here
-    const safeHtml = DOMPurify.sanitize(
-      post.content as unknown as string,
-      PURIFY_CONFIG,
-    ) as string;
+    // rendered_html is already sanitized server-side by renderContent;
+    // sanitize again here as defense-in-depth at the client boundary.
+    const safeHtml = DOMPurify.sanitize(post.rendered_html, PURIFY_CONFIG);
 
     return (
       <div class="lumina-container">

@@ -9,6 +9,7 @@ import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import { common, createLowlight } from 'lowlight';
 import type { TiptapDocument } from '@lumina/types';
 import { useAutoSave } from './hooks/useAutoSave';
+import { createSlashCommandExtension } from './extensions/SlashCommand';
 
 const lowlight = createLowlight(common);
 
@@ -18,8 +19,9 @@ interface Props {
   uploadEndpoint: string;
 }
 
-export function LuminaEditor({ initialContent, onSave, uploadEndpoint: _uploadEndpoint }: Props) {
+export function LuminaEditor({ initialContent, onSave, uploadEndpoint }: Props) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
@@ -28,6 +30,7 @@ export function LuminaEditor({ initialContent, onSave, uploadEndpoint: _uploadEn
       Image.configure({ allowBase64: false }),
       CodeBlockLowlight.configure({ lowlight }),
       HorizontalRule,
+      createSlashCommandExtension(uploadEndpoint),
     ],
     // null satisfies Content; undefined is rejected by exactOptionalPropertyTypes
     content: initialContent ?? null,

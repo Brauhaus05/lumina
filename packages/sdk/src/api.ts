@@ -5,10 +5,13 @@ export interface SdkApiOptions {
   apiKey: string;
 }
 
+// SDK-specific post shape returned by /api/sdk/posts — content pre-rendered to HTML server-side
+export type SdkPost = Omit<Post, 'content'> & { rendered_html: string };
+
 export async function fetchPosts(
   options: SdkApiOptions,
   page = 1,
-): Promise<PaginatedResponse<Post>> {
+): Promise<PaginatedResponse<SdkPost>> {
   const url = new URL(`${options.apiUrl}/api/sdk/posts`);
   url.searchParams.set('page', String(page));
 
@@ -19,7 +22,7 @@ export async function fetchPosts(
 
   if (!res.ok) throw new Error(`API error ${res.status}`);
 
-  const body = (await res.json()) as ApiResponse<PaginatedResponse<Post>>;
+  const body = (await res.json()) as ApiResponse<PaginatedResponse<SdkPost>>;
   if (!body.success) throw new Error(body.error);
   return body.data;
 }
@@ -27,7 +30,7 @@ export async function fetchPosts(
 export async function fetchPost(
   options: SdkApiOptions,
   slug: string,
-): Promise<Post> {
+): Promise<SdkPost> {
   const url = `${options.apiUrl}/api/sdk/posts/${encodeURIComponent(slug)}`;
 
   const res = await fetch(url, {
@@ -37,7 +40,7 @@ export async function fetchPost(
 
   if (!res.ok) throw new Error(`API error ${res.status}`);
 
-  const body = (await res.json()) as ApiResponse<Post>;
+  const body = (await res.json()) as ApiResponse<SdkPost>;
   if (!body.success) throw new Error(body.error);
   return body.data;
 }

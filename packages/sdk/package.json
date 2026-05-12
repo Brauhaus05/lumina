@@ -10,14 +10,15 @@
   },
   "dependencies": {
     "@lumina/types": "workspace:*",
-    "preact": "^10",
-    "dompurify": "^3"
+    "dompurify": "^3",
+    "preact": "^10"
   },
   "devDependencies": {
     "@types/dompurify": "^3",
-    "vite": "^5",
     "@vitejs/plugin-react": "^4",
     "rollup-plugin-visualizer": "^5",
-    "typescript": "^5"
+    "terser": "^5.47.1",
+    "typescript": "^5",
+    "vite": "^5"
   }
 }
