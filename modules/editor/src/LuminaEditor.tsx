@@ -1,12 +1,14 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import LinkExtension from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
 import { common, createLowlight } from 'lowlight';
 import type { TiptapDocument } from '@lumina/types';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -19,9 +21,13 @@ interface Props {
   initialContent?: TiptapDocument;
   onSave: (doc: TiptapDocument) => Promise<void>;
   uploadEndpoint: string;
+  onEditorReady?: (editor: Editor) => void;
 }
 
-export function LuminaEditor({ initialContent, onSave, uploadEndpoint }: Props) {
+export function LuminaEditor({ initialContent, onSave, uploadEndpoint, onEditorReady }: Props) {
+  const onEditorReadyRef = useRef(onEditorReady);
+  onEditorReadyRef.current = onEditorReady;
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -33,6 +39,7 @@ export function LuminaEditor({ initialContent, onSave, uploadEndpoint }: Props) 
       CodeBlockLowlight.configure({ lowlight }),
       HorizontalRule,
       LinkExtension.configure({ openOnClick: false }),
+      Underline,
       createSlashCommandExtension(uploadEndpoint),
     ],
     // null satisfies Content; undefined is rejected by exactOptionalPropertyTypes
@@ -41,6 +48,9 @@ export function LuminaEditor({ initialContent, onSave, uploadEndpoint }: Props) 
       attributes: {
         class: 'prose prose-invert max-w-none focus:outline-none min-h-[400px]',
       },
+    },
+    onCreate({ editor: e }) {
+      onEditorReadyRef.current?.(e);
     },
   });
 

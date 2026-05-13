@@ -23,6 +23,7 @@ export interface PostSeoMetadata {
   meta_description?: string;
   og_title?: string;
   og_image?: string;
+  issue_number?: string;
 }
 
 export interface Post {

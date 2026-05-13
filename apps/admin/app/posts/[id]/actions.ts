@@ -1,7 +1,8 @@
 'use server';
 
-import { createServiceRoleClient } from '@lumina/db/server';
+import { createServerSupabaseClient } from '@lumina/db/server';
 import { createPost, updatePost, publishPost, unpublishPost } from '@lumina/db/queries';
+import { getUserTenantId } from '@lumina/db/queries';
 import { PostStatus } from '@lumina/types';
 import type { ActionResult, Post, PostSeoMetadata, TiptapDocument } from '@lumina/types';
 
@@ -16,11 +17,11 @@ function isTiptapDocument(value: unknown): value is TiptapDocument {
 
 export async function savePostAction(
   postId: string | null,
-  tenantId: string,
   title: string,
   slug: string,
   content: TiptapDocument,
   seoMetadata?: PostSeoMetadata | null,
+  category?: string,
 ): Promise<ActionResult<Post>> {
   try {
     if (!isTiptapDocument(content)) {
@@ -33,7 +34,8 @@ export async function savePostAction(
       return { success: false, error: 'Slug is required', fieldErrors: { slug: 'Required' } };
     }
 
-    const client = await createServiceRoleClient();
+    const client = await createServerSupabaseClient();
+    const tenantId = await getUserTenantId(client);
 
     if (postId) {
       const post = await updatePost(client, postId, {
@@ -41,6 +43,7 @@ export async function savePostAction(
         slug,
         content,
         ...(seoMetadata !== undefined && { seo_metadata: seoMetadata }),
+        ...(category !== undefined && { category }),
       });
       return { success: true, data: post };
     } else {
@@ -51,6 +54,7 @@ export async function savePostAction(
         content,
         status: PostStatus.DRAFT,
         ...(seoMetadata !== undefined && { seo_metadata: seoMetadata }),
+        ...(category !== undefined && { category }),
       });
       return { success: true, data: post };
     }
@@ -69,7 +73,7 @@ export async function publishPostAction(
       return { success: false, error: 'Invalid content: must be a Tiptap document' };
     }
 
-    const client = await createServiceRoleClient();
+    const client = await createServerSupabaseClient();
     const post = await publishPost(client, postId, content);
     return { success: true, data: post };
   } catch (err) {
@@ -80,7 +84,7 @@ export async function publishPostAction(
 
 export async function unpublishPostAction(postId: string): Promise<ActionResult<Post>> {
   try {
-    const client = await createServiceRoleClient();
+    const client = await createServerSupabaseClient();
     const post = await unpublishPost(client, postId);
     return { success: true, data: post };
   } catch (err) {

@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { Plus, FileText } from 'lucide-react';
-import { createServiceRoleClient } from '@lumina/db/server';
-import { getPosts } from '@lumina/db/queries';
+import { createServerSupabaseClient } from '@lumina/db/server';
+import { getPosts, getUserTenantId } from '@lumina/db/queries';
 import { PostStatus } from '@lumina/types';
 import { Badge } from '@/components/ui/badge';
 
 export default async function DashboardPage() {
-  const tenantId = process.env['DEV_TENANT_ID'] ?? '';
-  const client = await createServiceRoleClient();
+  const client = await createServerSupabaseClient();
+  const tenantId = await getUserTenantId(client);
 
   const [allPosts, publishedPosts] = await Promise.all([
     getPosts(client, tenantId),

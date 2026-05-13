@@ -5,3 +5,4 @@ export { validateTiptapDoc } from './utils/validateTiptapDoc';
 export type { ValidationResult } from './utils/validateTiptapDoc';
 export { buildSlashItems } from './extensions/SlashCommand';
 export type { SlashCommandItem } from './extensions/SlashCommand';
+export type { Editor } from '@tiptap/core';

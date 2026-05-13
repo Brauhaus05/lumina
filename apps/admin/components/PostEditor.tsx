@@ -2,19 +2,28 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, Clock, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { LuminaEditor } from '@lumina/editor';
+import type { Editor, SaveSignal } from '@lumina/editor';
 import { savePostAction, publishPostAction, unpublishPostAction } from '../app/posts/[id]/actions';
 import { PostStatus } from '@lumina/types';
 import type { Post, PostSeoMetadata, TiptapDocument } from '@lumina/types';
+import { StatusStrip } from './editor/StatusStrip';
+import { MetaRow } from './editor/MetaRow';
+import { HeadlineInput } from './editor/HeadlineInput';
+import { PersistentToolbar } from './editor/PersistentToolbar';
+import { FootStrip } from './editor/FootStrip';
+import { EditorAside } from './editor/EditorAside';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-
-interface Props {
-  post?: Post;
-  tenantId: string;
-}
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontFamily: 'var(--font-sans)',
+  fontSize: '0.6rem',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--muted-foreground)',
+  marginBottom: '0.25rem',
+};
 
 const fieldStyle: React.CSSProperties = {
   width: '100%',
@@ -25,64 +34,88 @@ const fieldStyle: React.CSSProperties = {
   fontSize: '0.8rem',
   color: 'var(--foreground)',
   outline: 'none',
+  fontFamily: 'var(--font-sans)',
 };
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '0.6rem',
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
-  color: 'var(--muted-foreground)',
-  marginBottom: '0.25rem',
-};
+interface Props {
+  post?: Post;
+}
 
-export function PostEditor({ post, tenantId }: Props) {
+export function PostEditor({ post }: Props) {
   const router = useRouter();
+
+  // --- post state ---
   const [currentPost, setCurrentPost] = useState<Post | undefined>(post);
   const [title, setTitle] = useState(post?.title ?? '');
   const [slug, setSlug] = useState(post?.slug ?? '');
+  const [section, setSection] = useState(post?.category ?? '');
+  const [issue, setIssue] = useState(post?.seo_metadata?.issue_number ?? '');
   const [seoMetadata, setSeoMetadata] = useState<PostSeoMetadata>(post?.seo_metadata ?? {});
   const [author, setAuthor] = useState(post?.author ?? '');
-  const [category, setCategory] = useState(post?.category ?? '');
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? '');
   const [coverImage, setCoverImage] = useState(post?.cover_image ?? '');
   const [featured, setFeatured] = useState(post?.featured ?? false);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+
+  // --- editor state ---
+  const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
+  const [wordCount, setWordCount] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const [saveSignal, setSaveSignal] = useState<SaveSignal>('idle');
   const [showSettings, setShowSettings] = useState(false);
+
+  const handleEditorReady = useCallback((editor: Editor) => {
+    setEditorInstance(editor);
+
+    const updateCounts = () => {
+      const text = editor.getText().trim();
+      setWordCount(text ? text.split(/\s+/).filter(Boolean).length : 0);
+      setCharCount(editor.getText().length);
+    };
+    updateCounts();
+
+    editor.on('update', updateCounts);
+  }, []);
+
+  const readTimeMin = Math.max(1, Math.round(wordCount / 200));
+
+  const computedSlug = useCallback(
+    (rawSlug: string, rawTitle: string) =>
+      rawSlug.trim() ||
+      rawTitle
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, ''),
+    [],
+  );
 
   const handleSave = useCallback(
     async (doc: TiptapDocument) => {
       if (!title.trim()) return;
-      setSaveStatus('saving');
-      const computedSlug =
-        slug.trim() ||
-        title
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '');
+      setSaveSignal('saving');
 
+      const mergedSeo: PostSeoMetadata = { ...seoMetadata, issue_number: issue || undefined };
       const result = await savePostAction(
         currentPost?.id ?? null,
-        tenantId,
         title,
-        computedSlug,
+        computedSlug(slug, title),
         doc,
-        seoMetadata,
+        mergedSeo,
+        section || undefined,
       );
 
       if (result.success) {
         setCurrentPost(result.data);
         setSlug(result.data.slug);
-        setSaveStatus('saved');
+        setSaveSignal('saved');
         if (!currentPost) {
           router.replace(`/posts/${result.data.id}`);
         }
       } else {
-        setSaveStatus('error');
+        setSaveSignal('error');
         toast.error('Failed to save');
       }
     },
-    [title, slug, seoMetadata, currentPost, tenantId, router],
+    [title, slug, section, issue, seoMetadata, currentPost, computedSlug, router],
   );
 
   const handlePublish = useCallback(async () => {
@@ -107,25 +140,44 @@ export function PostEditor({ post, tenantId }: Props) {
     }
   }, [currentPost]);
 
+  const handleDelete = useCallback(() => {
+    toast.error('Delete is not yet implemented');
+  }, []);
+
   const isPublished = currentPost?.status === PostStatus.PUBLISHED;
 
-  const saveLabel =
-    saveStatus === 'saving'
+  const saveLabelText =
+    saveSignal === 'saving'
       ? 'Saving…'
-      : saveStatus === 'saved'
+      : saveSignal === 'saved'
         ? 'Saved locally'
-        : saveStatus === 'error'
+        : saveSignal === 'error'
           ? 'Save failed'
           : 'Unsaved';
 
   return (
-    <div className="flex h-screen flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
-
-      {/* ── Header ─────────────────────────────────────────────────── */}
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        background: 'var(--background)',
+        color: 'var(--foreground)',
+      }}
+    >
+      {/* ── Site Header ──────────────────────────────────────────────── */}
       <header
-        style={{ borderBottom: '1px solid var(--border)', height: '60px' }}
-        className="flex shrink-0 items-center justify-between px-6"
+        style={{
+          borderBottom: '1px solid var(--border)',
+          height: '60px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 24px',
+          flexShrink: 0,
+        }}
       >
+        {/* Brand */}
         <button
           onClick={() => router.push('/')}
           style={{
@@ -138,9 +190,10 @@ export function PostEditor({ post, tenantId }: Props) {
             height: '36px',
             border: 'none',
             cursor: 'pointer',
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
+            textTransform: 'uppercase',
           }}
         >
           <span
@@ -155,31 +208,49 @@ export function PostEditor({ post, tenantId }: Props) {
               fontSize: '0.65rem',
               fontWeight: 700,
             }}
+            aria-hidden
           >
             L
           </span>
           Lumina
         </button>
 
-        <div className="flex items-center gap-4">
+        {/* Save status + CTAs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span
-            style={{ fontSize: '0.7rem', letterSpacing: '0.05em', color: 'var(--muted-foreground)' }}
-            className="hidden sm:flex items-center gap-1.5"
+            style={{
+              fontSize: '0.7rem',
+              letterSpacing: '0.05em',
+              color: 'var(--muted-foreground)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontFamily: 'var(--font-sans)',
+            }}
           >
-            <Save size={12} aria-hidden />
-            {saveLabel}
+            {saveLabelText}
           </span>
 
           <button
-            onClick={() => handleSave(currentPost?.content ?? { type: 'doc', content: [] })}
+            onClick={() => {
+              const doc =
+                (editorInstance?.getJSON() as TiptapDocument | undefined) ??
+                currentPost?.content ??
+                { type: 'doc' as const, content: [] };
+              void handleSave(doc);
+            }}
             style={{
               border: '1px solid var(--border)',
               background: 'transparent',
               color: 'var(--foreground)',
-              padding: '0.3rem 0.9rem',
-              fontSize: '0.75rem',
-              letterSpacing: '0.06em',
+              padding: '0 1rem',
+              height: '34px',
+              fontSize: '0.7rem',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 700,
             }}
           >
             Save Draft
@@ -192,10 +263,14 @@ export function PostEditor({ post, tenantId }: Props) {
               background: isPublished ? 'transparent' : 'var(--foreground)',
               color: isPublished ? 'var(--foreground)' : 'var(--background)',
               border: isPublished ? '1px solid var(--border)' : 'none',
-              padding: '0.3rem 0.9rem',
-              fontSize: '0.75rem',
-              letterSpacing: '0.06em',
+              padding: '0 1rem',
+              height: '34px',
+              fontSize: '0.7rem',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 700,
               opacity: currentPost ? 1 : 0.4,
             }}
           >
@@ -204,113 +279,126 @@ export function PostEditor({ post, tenantId }: Props) {
         </div>
       </header>
 
-      {/* ── Body ───────────────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* ── Editor Shell ─────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-        {/* ── Editor pane ────────────────────────────────────────── */}
-        <div className="flex flex-1 flex-col overflow-auto">
-          {/* Title section */}
-          <div style={{ borderBottom: '1px solid var(--border)' }} className="px-10 pb-6 pt-8">
-            <p
-              style={{ fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--muted-foreground)' }}
-              className="mb-3 uppercase"
-            >
-              Editorial
-            </p>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter headline…"
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                fontFamily: 'var(--font-heading, var(--font-sans))',
-                fontSize: 'clamp(2rem, 4vw, 3rem)',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-                color: 'var(--foreground)',
-                outline: 'none',
+        {/* ── Main Column ──────────────────────────────────────────── */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'auto',
+            borderRight: '1px solid var(--border)',
+          }}
+        >
+          <StatusStrip
+            status={isPublished ? 'published' : 'draft'}
+            saveSignal={saveSignal}
+            wordCount={wordCount}
+            readTimeMin={readTimeMin}
+          />
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0',
+              padding: '48px 64px 64px',
+              flex: 1,
+            }}
+          >
+            <MetaRow
+              section={section}
+              onSectionChange={setSection}
+              slug={slug}
+              onSlugChange={setSlug}
+              issue={issue}
+              onIssueChange={(v) => {
+                setIssue(v);
+                setSeoMetadata((prev) => ({ ...prev, issue_number: v || undefined }));
               }}
             />
-            <input
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="slug (auto-generated)"
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                fontSize: '0.75rem',
-                letterSpacing: '0.05em',
-                color: 'var(--muted-foreground)',
-                outline: 'none',
-                marginTop: '0.5rem',
-              }}
-            />
+
+            <div style={{ marginTop: '24px' }}>
+              <HeadlineInput value={title} onChange={setTitle} />
+            </div>
+
+            <div style={{ marginTop: '24px' }}>
+              <PersistentToolbar editor={editorInstance} uploadEndpoint="/api/upload" />
+            </div>
+
+            <div style={{ marginTop: '24px', flex: 1 }}>
+              <LuminaEditor
+                {...(currentPost?.content ? { initialContent: currentPost.content } : {})}
+                onSave={handleSave}
+                uploadEndpoint="/api/upload"
+                onEditorReady={handleEditorReady}
+              />
+            </div>
+
+            <div style={{ marginTop: '24px' }}>
+              <FootStrip wordCount={wordCount} charCount={charCount} readTimeMin={readTimeMin} />
+            </div>
           </div>
 
-          {/* Tiptap editor */}
-          <div className="flex-1 px-10 py-8">
-            <LuminaEditor
-              {...(currentPost?.content ? { initialContent: currentPost.content } : {})}
-              onSave={handleSave}
-              uploadEndpoint="/api/upload"
-            />
-          </div>
-
-          {/* Settings panel (SEO + editorial fields) */}
+          {/* ── Settings Panel ─────────────────────────────────────── */}
           {showSettings && (
-            <div style={{ borderTop: '1px solid var(--border)' }} className="px-10 py-8">
-              <p style={{ fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--muted-foreground)' }} className="mb-6 uppercase">
-                Settings
+            <div
+              style={{ borderTop: '1px solid var(--border)', padding: '48px 64px' }}
+            >
+              <p style={labelStyle} className="mb-6">
+                Editorial
               </p>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                 <div>
                   <label style={labelStyle}>Author</label>
-                  <input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Elara Vance" style={fieldStyle} />
+                  <input
+                    type="text"
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    placeholder="Elara Vance"
+                    style={fieldStyle}
+                  />
                 </div>
                 <div>
-                  <label style={labelStyle}>Category</label>
-                  <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Architecture & Design" style={fieldStyle} />
+                  <label style={labelStyle}>
+                    <input
+                      type="checkbox"
+                      checked={featured}
+                      onChange={(e) => setFeatured(e.target.checked)}
+                      style={{ accentColor: 'var(--foreground)', width: '12px', height: '12px', marginRight: '6px' }}
+                    />
+                    Featured post
+                  </label>
                 </div>
-                <div className="sm:col-span-2">
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Excerpt</label>
                   <textarea
                     value={excerpt}
                     onChange={(e) => setExcerpt(e.target.value)}
                     placeholder="Short description shown in post cards…"
                     rows={2}
-                    style={{ ...fieldStyle, resize: 'none', borderBottom: '1px solid var(--border)' }}
+                    style={{ ...fieldStyle, resize: 'none' }}
                   />
                 </div>
-                <div className="sm:col-span-2">
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Cover image URL</label>
-                  <input type="url" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} placeholder="https://res.cloudinary.com/…" style={fieldStyle} />
-                </div>
-                <div>
-                  <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={featured}
-                      onChange={(e) => setFeatured(e.target.checked)}
-                      style={{ accentColor: 'var(--foreground)', width: '12px', height: '12px' }}
-                    />
-                    Featured post
-                  </label>
+                  <input
+                    type="url"
+                    value={coverImage}
+                    onChange={(e) => setCoverImage(e.target.value)}
+                    placeholder="https://res.cloudinary.com/…"
+                    style={fieldStyle}
+                  />
                 </div>
               </div>
 
-              <p style={{ fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--muted-foreground)', marginTop: '2rem' }} className="mb-4 uppercase">
-                SEO
-              </p>
+              <p style={{ ...labelStyle, marginTop: '32px', marginBottom: '16px' }}>SEO</p>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div className="sm:col-span-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>
                     Meta description
                     <span style={{ marginLeft: '0.5rem', opacity: 0.5 }}>
@@ -352,57 +440,12 @@ export function PostEditor({ post, tenantId }: Props) {
           )}
         </div>
 
-        {/* ── Right icon sidebar ─────────────────────────────────── */}
-        <aside
-          style={{ borderLeft: '1px solid var(--border)', width: '48px' }}
-          className="flex shrink-0 flex-col items-center justify-between py-4"
-        >
-          <div className="flex flex-col items-center gap-4">
-            <button
-              onClick={() => setShowSettings((v) => !v)}
-              title="Settings"
-              style={{
-                background: showSettings ? 'var(--foreground)' : 'transparent',
-                color: showSettings ? 'var(--background)' : 'var(--muted-foreground)',
-                border: 'none',
-                padding: '0.5rem',
-                cursor: 'pointer',
-                display: 'flex',
-              }}
-            >
-              <Settings size={16} aria-hidden />
-            </button>
-            <button
-              onClick={() => toast('Version history coming soon')}
-              title="History"
-              style={{
-                background: 'transparent',
-                color: 'var(--muted-foreground)',
-                border: 'none',
-                padding: '0.5rem',
-                cursor: 'pointer',
-                display: 'flex',
-              }}
-            >
-              <Clock size={16} aria-hidden />
-            </button>
-          </div>
-
-          <button
-            onClick={() => toast.error('Delete is not yet implemented')}
-            title="Delete post"
-            style={{
-              background: 'transparent',
-              color: '#b91c1c',
-              border: 'none',
-              padding: '0.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-            }}
-          >
-            <Trash2 size={16} aria-hidden />
-          </button>
-        </aside>
+        {/* ── Editor Aside ─────────────────────────────────────────── */}
+        <EditorAside
+          showSettings={showSettings}
+          onToggleSettings={() => setShowSettings((v) => !v)}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );

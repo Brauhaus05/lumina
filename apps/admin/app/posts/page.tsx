@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { createServiceRoleClient } from '@lumina/db/server';
-import { getPosts } from '@lumina/db/queries';
+import { createServerSupabaseClient } from '@lumina/db/server';
+import { getPosts, getUserTenantId } from '@lumina/db/queries';
 import { PostsTable } from '@/components/PostsTable';
 
 export default async function PostsPage() {
-  const tenantId = process.env['DEV_TENANT_ID'] ?? '';
-  const client = await createServiceRoleClient();
+  const client = await createServerSupabaseClient();
+  const tenantId = await getUserTenantId(client);
   const posts = await getPosts(client, tenantId);
 
   return (

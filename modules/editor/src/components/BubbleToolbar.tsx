@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { BubbleMenu, type Editor } from '@tiptap/react';
-import { Bold, Italic, Strikethrough, Code, Link } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Code, Link, Underline } from 'lucide-react';
 
 interface Props {
   editor: Editor;
@@ -97,6 +97,13 @@ export function BubbleToolbar({ editor }: Props) {
             title="Inline code"
           >
             <Code className="size-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            active={editor.isActive('underline')}
+            title="Underline"
+          >
+            <Underline className="size-3.5" />
           </ToolbarButton>
           <div className="mx-0.5 h-4 w-px bg-zinc-700" aria-hidden />
           <ToolbarButton

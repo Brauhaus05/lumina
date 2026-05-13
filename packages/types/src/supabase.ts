@@ -145,6 +145,29 @@ export interface Database {
           },
         ];
       };
+      user_tenant_map: {
+        Row: {
+          user_id: string;
+          tenant_id: string;
+        };
+        Insert: {
+          user_id: string;
+          tenant_id: string;
+        };
+        Update: {
+          user_id?: string;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_tenant_map_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
