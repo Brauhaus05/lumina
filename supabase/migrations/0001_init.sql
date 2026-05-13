@@ -1,6 +1,14 @@
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "moddatetime";
+
+-- Trigger function to keep updated_at current (replaces moddatetime extension)
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
 
 -- ============================================================
 -- TENANTS
@@ -9,7 +17,7 @@ CREATE TABLE tenants (
   id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name      text NOT NULL,
   subdomain text NOT NULL UNIQUE,
-  api_key   text NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex')
+  api_key   text NOT NULL DEFAULT encode(extensions.gen_random_bytes(32), 'hex')
 );
 
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
@@ -44,7 +52,7 @@ CREATE POLICY "tenant_isolation" ON posts
 -- Auto-update updated_at on every UPDATE
 CREATE TRIGGER posts_updated_at
   BEFORE UPDATE ON posts
-  FOR EACH ROW EXECUTE PROCEDURE moddatetime(updated_at);
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ============================================================
 -- MEDIA
