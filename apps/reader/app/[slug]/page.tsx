@@ -54,6 +54,14 @@ function formatDateLong(iso: string) {
   }).toUpperCase();
 }
 
+function BackArrow() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path className="arrow-line" d="M10 5H1M5 9 1 5l4-4" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
   const headerStore = await headers();
@@ -68,99 +76,57 @@ export default async function PostPage({ params }: Props) {
 
   const html = renderContent(post.content);
 
-  const labelStyle = {
-    fontSize: '0.6rem',
-    letterSpacing: '0.15em',
-    color: 'var(--color-ink-muted)',
-    textTransform: 'uppercase' as const,
-    marginBottom: '0.25rem',
-  };
-
-  const valueStyle = {
-    fontSize: '0.8rem',
-    letterSpacing: '0.05em',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    color: 'var(--color-ink)',
-  };
-
-  const dividerStyle = { borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '1rem' } as const;
-
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      {/* ── Left sidebar ────────────────────────────────────────────── */}
-      <aside
-        style={{ borderRight: '1px solid var(--color-border)', width: '200px', flexShrink: 0 }}
-        className="hidden px-6 py-10 md:block"
-      >
-        <Link
-          href="/"
-          style={{ fontSize: '0.65rem', letterSpacing: '0.1em', color: 'var(--color-ink)', textDecoration: 'none' }}
-          className="mb-8 flex items-center gap-1 uppercase hover:underline"
-        >
-          ← Back to Journal
+    <div className="post-wrap">
+      {/* ── Sidebar ────────────────────────────────────────────── */}
+      <aside className="post-sidebar">
+        <Link href="/" className="back-link">
+          <BackArrow />
+          Back to Journal
         </Link>
 
-        <div style={dividerStyle}>
-          <p style={labelStyle}>Published</p>
-          <p style={valueStyle}>{formatDateLong(post.updated_at)}</p>
+        <div className="meta-block">
+          <div className="meta-row">
+            <span className="meta-row__label">Published</span>
+            <span className="meta-row__value">{formatDateLong(post.updated_at)}</span>
+          </div>
+          {post.category && (
+            <div className="meta-row">
+              <span className="meta-row__label">Category</span>
+              <span className="meta-row__value">{post.category}</span>
+            </div>
+          )}
+          {post.author && (
+            <div className="meta-row">
+              <span className="meta-row__label">Author</span>
+              <span className="meta-row__value">{post.author}</span>
+            </div>
+          )}
         </div>
 
-        {post.category && (
-          <div style={dividerStyle}>
-            <p style={labelStyle}>Category</p>
-            <p style={valueStyle}>{post.category}</p>
+        <div className="share">
+          <span className="share__label">Share</span>
+          <div className="share__row">
+            <ShareButtons title={post.title} />
           </div>
-        )}
-
-        {post.author && (
-          <div style={dividerStyle}>
-            <p style={labelStyle}>Author</p>
-            <p style={valueStyle}>{post.author}</p>
-          </div>
-        )}
-
-        <div style={dividerStyle}>
-          <p style={labelStyle}>Share</p>
-          <ShareButtons title={post.title} />
         </div>
       </aside>
 
-      {/* ── Main content ────────────────────────────────────────────── */}
-      <main className="flex-1 px-6 py-10 md:px-16 md:py-12">
-        {/* Mobile back link */}
-        <Link
-          href="/"
-          style={{ fontSize: '0.65rem', letterSpacing: '0.1em', color: 'var(--color-ink)', textDecoration: 'none' }}
-          className="mb-6 flex items-center gap-1 uppercase hover:underline md:hidden"
-        >
-          ← Back to Journal
-        </Link>
+      {/* ── Main content ────────────────────────────────────────── */}
+      <article className="post-body">
+        {post.category && (
+          <div className="post-eyebrow">
+            <span className="pill pill--solid">{post.category}</span>
+          </div>
+        )}
 
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(2.5rem, 6vw, 5rem)',
-            letterSpacing: '0.02em',
-            lineHeight: 1,
-            textTransform: 'uppercase',
-            maxWidth: '16ch',
-          }}
-          className="mb-6"
-        >
-          {post.title}
-        </h1>
+        <h1 className="post-title">{post.title}</h1>
 
-        <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: '2rem' }} />
+        {post.excerpt && <p className="post-deck">{post.excerpt}</p>}
 
         {post.cover_image && (
-          <div className="mb-8">
-            <img
-              src={post.cover_image}
-              alt={post.title}
-              className="w-full object-cover"
-              style={{ maxHeight: '480px' }}
-            />
+          <div className="hero-img">
+            <img src={post.cover_image} alt={post.title} />
           </div>
         )}
 
@@ -168,8 +134,17 @@ export default async function PostPage({ params }: Props) {
           className="lumina-content"
           dangerouslySetInnerHTML={{ __html: html }}
         />
-      </main>
+
+        <div className="post-outro">
+          <span className="post-outro__label">More reading</span>
+          <Link href="/" className="post-outro__next">
+            Back to Journal
+            <svg width="14" height="14" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M0 5h9M5 1l4 4-4 4" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          </Link>
+        </div>
+      </article>
     </div>
   );
 }
-

@@ -23,33 +23,33 @@ function formatDate(iso: string) {
   }).toUpperCase();
 }
 
-function PostCard({ post }: { post: Post }) {
+function ReadMoreArrow() {
   return (
-    <article>
-      <p style={{ color: 'var(--color-ink-muted)', fontSize: '0.7rem', letterSpacing: '0.1em' }} className="mb-2 uppercase">
-        {formatDate(post.updated_at)}
-      </p>
-      <h2 className="mb-3 text-xl font-bold leading-snug">
-        <Link href={`/${post.slug}`} style={{ color: 'var(--color-ink)', textDecoration: 'none' }}>
-          {post.title}
-        </Link>
-      </h2>
-      {post.excerpt && (
-        <p style={{ color: 'var(--color-ink)', fontSize: '0.9rem', lineHeight: 1.65 }} className="mb-4">
-          {post.excerpt}
-        </p>
-      )}
-      <Link
-        href={`/${post.slug}`}
-        style={{ color: 'var(--color-ink)', fontSize: '0.75rem', letterSpacing: '0.08em', textDecoration: 'none' }}
-        className="inline-flex items-center gap-1 uppercase hover:underline"
-      >
-        Read more <span aria-hidden>→</span>
-      </Link>
-    </article>
+    <svg viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path className="arrow-line" d="M0 5h9M5 1l4 4-4 4" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
   );
 }
 
+function ArticleCard({ post, num }: { post: Post; num: number }) {
+  const padded = String(num).padStart(2, '0');
+  return (
+    <article className="article-card">
+      <span className="article-card__num">{padded}</span>
+      {post.category && <span className="article-card__kicker">{post.category}</span>}
+      <h3 className="article-card__title">
+        <Link href={`/${post.slug}`}>{post.title}</Link>
+      </h3>
+      {post.excerpt && <p className="article-card__excerpt">{post.excerpt}</p>}
+      <div className="article-card__foot">
+        <span className="article-card__date">{formatDate(post.updated_at)}</span>
+        <Link href={`/${post.slug}`} className="readmore">
+          Read more <ReadMoreArrow />
+        </Link>
+      </div>
+    </article>
+  );
+}
 
 export default async function PostListPage() {
   const headerStore = await headers();
@@ -68,183 +68,103 @@ export default async function PostListPage() {
   const featuredId = featured?.id;
   const gridPosts = allPosts.filter((p) => p.id !== featuredId);
 
-  // Derive unique categories for the index
   const categories = Array.from(
     new Set(allPosts.map((p) => p.category).filter((c): c is string => Boolean(c))),
   );
 
-  const borderStyle = { borderTop: '1px solid var(--color-border)' } as const;
+  // Split grid posts: first two go in the 3-col section alongside sidebar,
+  // remaining fill the col sections
+  const primaryPosts = gridPosts.slice(0, 4);
+  const totalPosts = allPosts.length;
 
   return (
     <>
-      {/* ── Page header ─────────────────────────────────────────────── */}
-      <section className="px-6 pb-8 pt-12">
-        <h1
-          style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em', lineHeight: 1 }}
-          className="mb-4 text-[5rem] uppercase leading-none"
-        >
-          Journal
-        </h1>
-        <p style={{ color: 'var(--color-ink)', maxWidth: '38ch', lineHeight: 1.6 }} className="text-sm">
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <section className="home-hero">
+        <h1>Field<br />Notes</h1>
+        <p className="home-hero__sub">
           Observations from the editorial desk. Curated thoughts on design, structure, and culture.
         </p>
+        <div className="home-hero__meta">
+          <span>Updated Weekly</span>
+          {totalPosts > 0 && <span>{totalPosts} {totalPosts === 1 ? 'Entry' : 'Entries'}</span>}
+        </div>
       </section>
 
-      {/* ── Featured post ───────────────────────────────────────────── */}
+      {/* ── Featured post ────────────────────────────────────── */}
       {featured && (
-        <section style={borderStyle} className="grid grid-cols-1 md:grid-cols-[2fr_1fr]">
-          {featured.cover_image ? (
-            <div className="aspect-[4/3] overflow-hidden md:aspect-auto">
-              <img
-                src={featured.cover_image}
-                alt={featured.title}
-                className="h-full w-full object-cover"
-              />
-            </div>
-          ) : (
-            <div
-              style={{ background: 'var(--color-border)', minHeight: '380px' }}
-              className="hidden md:block"
-            />
-          )}
-          <div
-            style={{ borderLeft: '1px solid var(--color-border)' }}
-            className="flex flex-col justify-between p-8"
-          >
+        <section className="featured">
+          <Link
+            href={`/${featured.slug}`}
+            className="featured__media"
+            aria-label={featured.title}
+            style={featured.cover_image ? { backgroundImage: `url('${featured.cover_image}')` } : undefined}
+          />
+          <div className="featured__body">
             <div>
-              <p style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: 'var(--color-ink-muted)' }} className="mb-4 uppercase">
-                Featured
-              </p>
-              <h2 className="mb-4 text-2xl font-bold leading-tight">
-                <Link href={`/${featured.slug}`} style={{ color: 'var(--color-ink)', textDecoration: 'none' }}>
-                  {featured.title}
-                </Link>
-              </h2>
-              {featured.excerpt && (
-                <p style={{ fontSize: '0.875rem', lineHeight: 1.65, color: 'var(--color-ink)' }}>
-                  {featured.excerpt}
-                </p>
-              )}
+              {featured.category && <div className="featured__kicker">{featured.category}</div>}
+              <h2 className="featured__title">{featured.title}</h2>
+              {featured.excerpt && <p className="featured__excerpt">{featured.excerpt}</p>}
             </div>
-            <div
-              style={borderStyle}
-              className="flex items-center justify-between pt-4"
-            >
-              <span style={{ fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--color-ink-muted)' }} className="uppercase">
-                {formatDate(featured.updated_at)}
-              </span>
-              <Link
-                href={`/${featured.slug}`}
-                style={{
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-ink)',
-                  fontSize: '0.65rem',
-                  letterSpacing: '0.1em',
-                  padding: '0.35rem 0.75rem',
-                  textDecoration: 'none',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Read
-              </Link>
+            <div className="featured__foot">
+              <span className="featured__date">{formatDate(featured.updated_at)}</span>
+              <Link href={`/${featured.slug}`} className="featured__cta">Read</Link>
             </div>
           </div>
         </section>
       )}
 
-      {/* ── Post grid + sidebar ─────────────────────────────────────── */}
-      {gridPosts.length > 0 && (
-        <section style={borderStyle} className="grid grid-cols-1 md:grid-cols-3">
-          {/* First two posts */}
-          {gridPosts.slice(0, 2).map((post, i) => (
-            <div
-              key={post.id}
-              style={{
-                borderRight: i === 0 ? '1px solid var(--color-border)' : undefined,
-              }}
-              className="p-8"
-            >
-              <PostCard post={post} />
-            </div>
-          ))}
+      {/* ── 3-column grid ────────────────────────────────────── */}
+      {primaryPosts.length > 0 && (
+        <section className="grid-3">
+          {/* Column 1 */}
+          <div className="col">
+            {primaryPosts.slice(0, 2).map((post, i) => (
+              <ArticleCard key={post.id} post={post} num={i + 1} />
+            ))}
+          </div>
 
-          {/* Newsletter + Index sidebar */}
-          <div style={{ borderLeft: '1px solid var(--color-border)' }}>
+          {/* Column 2 */}
+          <div className="col">
+            {primaryPosts.slice(2, 4).map((post, i) => (
+              <ArticleCard key={post.id} post={post} num={i + 3} />
+            ))}
+          </div>
+
+          {/* Column 3: sidebar */}
+          <aside className="col sidebar">
             <NewsletterWidget />
-
             {categories.length > 0 && (
-              <div style={{ borderTop: '1px solid var(--color-border)' }} className="p-6">
-                <p style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: 'var(--color-ink-muted)' }} className="mb-4 uppercase">
-                  Index
-                </p>
-                <ol className="list-none p-0">
+              <div className="index">
+                <div className="index__title">Index — By Category</div>
+                <ul className="index__list">
                   {categories.map((cat, idx) => (
-                    <li
-                      key={cat}
-                      style={{ borderTop: idx > 0 ? '1px solid var(--color-border)' : undefined }}
-                      className="flex items-center justify-between py-3"
-                    >
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                        {String(idx + 1).padStart(2, '0')}. {cat}
+                    <li key={cat}>
+                      <span>{String(idx + 1).padStart(2, '0')} · {cat}</span>
+                      <span className="count">
+                        {allPosts.filter((p) => p.category === cat).length}
                       </span>
-                      <span style={{ color: 'var(--color-ink-muted)', fontSize: '0.75rem' }} aria-hidden>↗</span>
                     </li>
                   ))}
-                </ol>
+                </ul>
               </div>
             )}
-          </div>
+          </aside>
         </section>
       )}
 
-      {/* ── Remaining posts ─────────────────────────────────────────── */}
-      {gridPosts.slice(2).length > 0 && (
-        <section style={borderStyle} className="grid grid-cols-1 md:grid-cols-2">
-          {gridPosts.slice(2).map((post, i) => (
-            <div
-              key={post.id}
-              style={{
-                borderRight: i % 2 === 0 ? '1px solid var(--color-border)' : undefined,
-                borderTop: i >= 2 ? '1px solid var(--color-border)' : undefined,
-              }}
-              className="p-8"
-            >
-              {post.cover_image && (
-                <div className="mb-5 overflow-hidden">
-                  <img
-                    src={post.cover_image}
-                    alt={post.title}
-                    className="w-full object-cover"
-                    style={{ maxHeight: '280px' }}
-                  />
-                </div>
-              )}
-              <PostCard post={post} />
-            </div>
-          ))}
-        </section>
-      )}
-
-      {/* ── Load more ───────────────────────────────────────────────── */}
+      {/* ── Pagination strip ─────────────────────────────────── */}
       {allPosts.length > 0 && (
-        <section style={borderStyle} className="flex items-center justify-center py-10">
-          <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.5rem',
-              letterSpacing: '0.15em',
-              color: 'var(--color-ink)',
-            }}
-            className="uppercase"
-          >
-            + More
-          </span>
+        <section className="pagination">
+          <span className="pagination__meta">Page 01</span>
+          <span className="pagination__more">+ More</span>
+          <span className="pagination__meta">{totalPosts} entries</span>
         </section>
       )}
 
       {allPosts.length === 0 && (
-        <section className="px-6 py-20 text-center">
-          <p style={{ color: 'var(--color-ink-muted)', fontSize: '0.9rem' }}>No published posts yet.</p>
+        <section className="pagination">
+          <span className="pagination__meta">No published posts yet.</span>
         </section>
       )}
     </>
