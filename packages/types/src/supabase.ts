@@ -36,6 +36,12 @@ export interface Database {
           slug: string;
           content: Json;
           status: string;
+          seo_metadata: Json | null;
+          featured: boolean;
+          cover_image: string | null;
+          excerpt: string | null;
+          category: string | null;
+          author: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -46,6 +52,12 @@ export interface Database {
           slug: string;
           content?: Json;
           status?: string;
+          seo_metadata?: Json | null;
+          featured?: boolean;
+          cover_image?: string | null;
+          excerpt?: string | null;
+          category?: string | null;
+          author?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -56,6 +68,12 @@ export interface Database {
           slug?: string;
           content?: Json;
           status?: string;
+          seo_metadata?: Json | null;
+          featured?: boolean;
+          cover_image?: string | null;
+          excerpt?: string | null;
+          category?: string | null;
+          author?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -33,9 +33,14 @@ export interface Post {
   content: TiptapDocument;
   status: PostStatusValue;
   seo_metadata?: PostSeoMetadata | null;
+  featured: boolean;
+  cover_image?: string | null;
+  excerpt?: string | null;
+  category?: string | null;
+  author?: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export type PostInsert = Omit<Post, 'id' | 'created_at' | 'updated_at'>;
+export type PostInsert = Omit<Post, 'id' | 'created_at' | 'updated_at' | 'featured'> & { featured?: boolean };
 export type PostUpdate = Partial<Omit<Post, 'id' | 'tenant_id' | 'created_at' | 'updated_at'>>;

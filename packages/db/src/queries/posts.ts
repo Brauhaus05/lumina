@@ -113,3 +113,21 @@ export async function getPublishedPosts(
 ): Promise<Post[]> {
   return getPosts(client, tenantId, { status: PostStatus.PUBLISHED, perPage: 100 });
 }
+
+export async function getFeaturedPost(
+  client: DbClient,
+  tenantId: string,
+): Promise<Post | null> {
+  const { data, error } = await client
+    .from('posts')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('status', PostStatus.PUBLISHED)
+    .eq('featured', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as Post | null;
+}

@@ -6,9 +6,9 @@ import type { Metadata } from 'next';
 import { getTenantBySubdomain, getPostBySlug } from '@lumina/db/queries';
 import { renderContent } from '@lumina/reader';
 import { PostStatus } from '@lumina/types';
-import type { Database, TiptapNode } from '@lumina/types';
+import type { Database } from '@lumina/types';
+import { ShareButtons } from '../../components/ShareButtons';
 
-// ISR: revalidate every 60 seconds
 export const revalidate = 60;
 
 interface Props {
@@ -37,21 +37,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const seo = post.seo_metadata;
   return {
     title: seo?.og_title ?? post.title,
-    description: seo?.meta_description,
+    description: seo?.meta_description ?? post.excerpt ?? undefined,
     openGraph: {
       title: seo?.og_title ?? post.title,
-      description: seo?.meta_description,
+      description: seo?.meta_description ?? post.excerpt ?? undefined,
       ...(seo?.og_image && { images: [{ url: seo.og_image }] }),
     },
   };
 }
 
-function countWords(nodes: TiptapNode[]): number {
-  return nodes.reduce((sum, node) => {
-    if (node.text) return sum + node.text.trim().split(/\s+/).filter(Boolean).length;
-    if (node.content) return sum + countWords(node.content);
-    return sum;
-  }, 0);
+function formatDateLong(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).toUpperCase();
 }
 
 export default async function PostPage({ params }: Props) {
@@ -67,41 +67,109 @@ export default async function PostPage({ params }: Props) {
   if (!post || post.status !== PostStatus.PUBLISHED) notFound();
 
   const html = renderContent(post.content);
-  const wordCount = countWords(post.content.content);
-  const readingMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
+  const labelStyle = {
+    fontSize: '0.6rem',
+    letterSpacing: '0.15em',
+    color: 'var(--color-ink-muted)',
+    textTransform: 'uppercase' as const,
+    marginBottom: '0.25rem',
+  };
+
+  const valueStyle = {
+    fontSize: '0.8rem',
+    letterSpacing: '0.05em',
+    fontWeight: 600,
+    textTransform: 'uppercase' as const,
+    color: 'var(--color-ink)',
+  };
+
+  const dividerStyle = { borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '1rem' } as const;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12">
-      <nav className="mb-8">
+    <div className="flex min-h-screen flex-col md:flex-row">
+      {/* ── Left sidebar ────────────────────────────────────────────── */}
+      <aside
+        style={{ borderRight: '1px solid var(--color-border)', width: '200px', flexShrink: 0 }}
+        className="hidden px-6 py-10 md:block"
+      >
         <Link
           href="/"
-          className="text-sm text-gray-400 hover:text-[var(--lumina-color-accent,#4f46e5)]"
+          style={{ fontSize: '0.65rem', letterSpacing: '0.1em', color: 'var(--color-ink)', textDecoration: 'none' }}
+          className="mb-8 flex items-center gap-1 uppercase hover:underline"
         >
-          ← All posts
+          ← Back to Journal
         </Link>
-      </nav>
 
-      <article>
-        <header className="mb-10">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight">{post.title}</h1>
-          <div className="mt-4 flex items-center gap-3 text-sm text-gray-400">
-            <time dateTime={post.updated_at}>
-              {new Date(post.updated_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </time>
-            <span aria-hidden>·</span>
-            <span>{readingMinutes} min read</span>
+        <div style={dividerStyle}>
+          <p style={labelStyle}>Published</p>
+          <p style={valueStyle}>{formatDateLong(post.updated_at)}</p>
+        </div>
+
+        {post.category && (
+          <div style={dividerStyle}>
+            <p style={labelStyle}>Category</p>
+            <p style={valueStyle}>{post.category}</p>
           </div>
-        </header>
+        )}
+
+        {post.author && (
+          <div style={dividerStyle}>
+            <p style={labelStyle}>Author</p>
+            <p style={valueStyle}>{post.author}</p>
+          </div>
+        )}
+
+        <div style={dividerStyle}>
+          <p style={labelStyle}>Share</p>
+          <ShareButtons title={post.title} />
+        </div>
+      </aside>
+
+      {/* ── Main content ────────────────────────────────────────────── */}
+      <main className="flex-1 px-6 py-10 md:px-16 md:py-12">
+        {/* Mobile back link */}
+        <Link
+          href="/"
+          style={{ fontSize: '0.65rem', letterSpacing: '0.1em', color: 'var(--color-ink)', textDecoration: 'none' }}
+          className="mb-6 flex items-center gap-1 uppercase hover:underline md:hidden"
+        >
+          ← Back to Journal
+        </Link>
+
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+            letterSpacing: '0.02em',
+            lineHeight: 1,
+            textTransform: 'uppercase',
+            maxWidth: '16ch',
+          }}
+          className="mb-6"
+        >
+          {post.title}
+        </h1>
+
+        <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: '2rem' }} />
+
+        {post.cover_image && (
+          <div className="mb-8">
+            <img
+              src={post.cover_image}
+              alt={post.title}
+              className="w-full object-cover"
+              style={{ maxHeight: '480px' }}
+            />
+          </div>
+        )}
 
         <div
           className="lumina-content"
           dangerouslySetInnerHTML={{ __html: html }}
         />
-      </article>
-    </main>
+      </main>
+    </div>
   );
 }
+

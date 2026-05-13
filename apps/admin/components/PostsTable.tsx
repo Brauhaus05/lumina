@@ -60,7 +60,7 @@ export function PostsTable({ posts }: Props) {
       {/* Toolbar: tabs + search */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={statusFilter} onValueChange={handleFilterChange}>
-          <TabsList className="bg-zinc-900 border border-zinc-800">
+          <TabsList className="bg-card border border-border">
             <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
             <TabsTrigger value={PostStatus.PUBLISHED}>
               Published ({counts.published})
@@ -70,45 +70,45 @@ export function PostsTable({ posts }: Props) {
         </Tabs>
 
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-zinc-500" />
+          <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="Search posts…"
-            className="pl-8 bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-primary/50"
+            className="pl-8 bg-card border-border text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-12 text-center">
-          <p className="text-zinc-400">
+        <div className="border border-border bg-card p-12 text-center">
+          <p className="text-muted-foreground">
             {query || statusFilter !== 'all'
               ? 'No posts match your filter.'
               : 'No posts yet.'}
           </p>
           {!query && statusFilter === 'all' && (
-            <Link href="/posts/new" className="mt-4 inline-block text-primary hover:text-primary/80">
+            <Link href="/posts/new" className="mt-4 inline-block text-foreground underline hover:opacity-70">
               Create your first post →
             </Link>
           )}
         </div>
       ) : (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900">
-          <ul className="divide-y divide-zinc-800">
+        <div className="border border-border bg-card">
+          <ul className="divide-y divide-border">
             {paginated.map((post) => (
               <li key={post.id}>
                 <Link
                   href={`/posts/${post.id}`}
-                  className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-zinc-800/50"
+                  className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-muted"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-zinc-100">{post.title}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">/{post.slug}</p>
+                    <p className="truncate font-medium text-foreground">{post.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">/{post.slug}</p>
                   </div>
                   <div className="ml-4 flex shrink-0 items-center gap-4">
-                    <span className="hidden text-xs text-zinc-600 sm:block">
+                    <span className="hidden text-xs text-muted-foreground sm:block">
                       {new Date(post.updated_at).toLocaleDateString()}
                     </span>
                     <Badge variant={post.status === PostStatus.PUBLISHED ? 'default' : 'secondary'}>
@@ -121,8 +121,8 @@ export function PostsTable({ posts }: Props) {
           </ul>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-zinc-800 px-6 py-3">
-              <p className="text-xs text-zinc-500">
+            <div className="flex items-center justify-between border-t border-border px-6 py-3">
+              <p className="text-xs text-muted-foreground">
                 {(safePage - 1) * PAGE_SIZE + 1}–
                 {Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}
               </p>
@@ -130,17 +130,17 @@ export function PostsTable({ posts }: Props) {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
-                  className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
+                  className="p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
-                <span className="px-2 text-xs text-zinc-500">
+                <span className="px-2 text-xs text-muted-foreground">
                   {safePage} / {totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
-                  className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
+                  className="p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
                 >
                   <ChevronRight className="size-4" />
                 </button>
