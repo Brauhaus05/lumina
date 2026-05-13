@@ -1,0 +1,196 @@
+/* Braulio's Journal — brutalist editorial system */
+:root {
+  --ink: rgb(51, 51, 51);
+  --paper: rgb(235, 236, 220);
+  --line: rgb(51, 51, 51);
+  --accent: rgb(186, 26, 26);
+  --hair: 1px;
+  --col: 426.667px;
+  --max: 1280px;
+  --pad-x: 64px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.eyebrow,
+.label,
+.meta {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.display {
+  font-family: "Anton", "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 0.92;
+}
+
+.serif-italic {
+  font-family: "Montserrat", sans-serif;
+  font-style: italic;
+}
+
+/* Page shell — fixed 1280 canvas, brutalist hairline grid */
+.page {
+  width: var(--max);
+  margin: 0 auto;
+  border-left: var(--hair) solid var(--line);
+  border-right: var(--hair) solid var(--line);
+  background: var(--paper);
+}
+
+/* HEADER ─────────────────────────────────────────────────────── */
+.site-header {
+  height: 144px;
+  border-bottom: var(--hair) solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--pad-x);
+  background: var(--paper);
+  position: relative;
+}
+.site-header__inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.brand__mark {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+  position: relative;
+  flex-shrink: 0;
+}
+.brand__mark::after {
+  content: "B";
+  font-family: "Anton", sans-serif;
+  font-size: 44px;
+  color: var(--paper);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.brand__name {
+  font-family: "Anton", sans-serif;
+  font-size: 48px;
+  line-height: 52px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.nav a {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+  border-bottom: var(--hair) solid transparent;
+  transition: border-color 120ms ease;
+}
+.nav a:hover,
+.nav a.is-active { border-bottom-color: var(--ink); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 24px;
+  border: var(--hair) solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.btn:hover { background: var(--ink); color: var(--paper); }
+.btn--solid { background: var(--ink); color: var(--paper); }
+.btn--solid:hover { background: var(--paper); color: var(--ink); }
+.btn--block { width: 100%; height: 42px; }
+
+/* FOOTER ─────────────────────────────────────────────────────── */
+.site-footer {
+  height: 147px;
+  border-top: var(--hair) solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--pad-x);
+}
+.foot-mark {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+}
+.foot-mark::after {
+  content: "B";
+  font-family: "Anton", sans-serif;
+  font-size: 30px;
+  color: var(--paper);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.foot-links { display: flex; gap: 24px; }
+.foot-links a { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+.foot-copy { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Read-more arrow link */
+.readmore {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.readmore svg { width: 10px; height: 10px; }
+.readmore:hover .arrow-line { transform: translateX(2px); }
+.arrow-line { transition: transform 120ms ease; }
+
+/* Utility */
+.hair-b { border-bottom: var(--hair) solid var(--line); }
+.hair-t { border-top: var(--hair) solid var(--line); }
+.hair-r { border-right: var(--hair) solid var(--line); }
+.hair-l { border-left: var(--hair) solid var(--line); }

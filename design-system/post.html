@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>The Brutalist Resurgence — Braulio's Journal</title>
+<meta name="viewport" content="width=1280" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .post-wrap {
+    padding: 96px 40px 120px;
+    display: grid;
+    grid-template-columns: 282px 1fr;
+    column-gap: 126px;
+  }
+
+  /* Sidebar */
+  .post-sidebar { display: flex; flex-direction: column; gap: 40px; position: sticky; top: 32px; align-self: start; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding-bottom: 12px; border-bottom: var(--hair) solid var(--ink);
+  }
+  .back-link:hover .arrow-line { transform: translateX(-2px); }
+
+  .meta-block { display: flex; flex-direction: column; gap: 24px; padding-bottom: 32px; border-bottom: var(--hair) solid var(--ink); }
+  .meta-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  .meta-row__label { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(51,51,51,0.55); }
+  .meta-row__value { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-align: right; }
+
+  .share { display: flex; flex-direction: column; gap: 16px; }
+  .share__label { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .share__row { display: flex; gap: 12px; }
+  .share__btn {
+    width: 40px; height: 40px; display: grid; place-items: center;
+    border: var(--hair) solid var(--ink); cursor: pointer; transition: background 120ms, color 120ms;
+  }
+  .share__btn:hover { background: var(--ink); color: var(--paper); }
+  .share__btn svg { width: 20px; height: 20px; }
+  .share__btn:hover svg path { fill: var(--paper); }
+
+  .toc { display: flex; flex-direction: column; gap: 12px; }
+  .toc__label { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(51,51,51,0.55); }
+  .toc__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .toc__list a {
+    font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 8px 0; display: flex; gap: 12px; align-items: baseline;
+    border-bottom: var(--hair) solid rgba(51,51,51,0.2);
+  }
+  .toc__list a:hover { border-bottom-color: var(--ink); }
+  .toc__list .n { color: rgba(51,51,51,0.45); }
+
+  /* Article body */
+  .post-body { max-width: 792px; }
+
+  .post-eyebrow {
+    display: flex; gap: 24px; align-items: center; padding-bottom: 24px;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .post-eyebrow .pill { padding: 4px 10px; border: var(--hair) solid var(--ink); }
+  .post-eyebrow .pill--solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .post-title {
+    font-family: "Anton", sans-serif;
+    font-size: 144px;
+    line-height: 0.88;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+    margin: 0 0 32px;
+  }
+  .post-deck {
+    font-size: 22px;
+    line-height: 32px;
+    padding: 24px 0 32px;
+    border-top: var(--hair) solid var(--ink);
+    border-bottom: var(--hair) solid var(--ink);
+    margin: 0 0 32px;
+  }
+  .post-deck::first-line { font-weight: 700; }
+
+  .hero-img {
+    aspect-ratio: 792 / 488;
+    background: var(--paper) center/cover no-repeat;
+    border: var(--hair) solid var(--ink);
+    margin-bottom: 32px;
+    position: relative;
+  }
+  .hero-img__cap {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 12px 16px;
+    background: var(--paper);
+    border-top: var(--hair) solid var(--ink);
+    display: flex; justify-content: space-between;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .post-body h2 {
+    font-family: "Anton", sans-serif;
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin: 48px 0 24px;
+  }
+  .post-body h2 .num {
+    display: inline-block;
+    width: 64px;
+    font-size: 28px;
+    vertical-align: top;
+    padding-top: 8px;
+    color: rgba(51,51,51,0.45);
+  }
+  .post-body p { font-size: 18px; line-height: 30px; margin: 0 0 24px; max-width: 64ch; }
+  .post-body p .dropcap {
+    float: left;
+    font-family: "Anton", sans-serif;
+    font-size: 96px;
+    line-height: 0.85;
+    padding: 6px 14px 0 0;
+    letter-spacing: -0.02em;
+  }
+
+  blockquote {
+    margin: 40px 0;
+    padding: 32px;
+    border: var(--hair) solid var(--ink);
+    font-family: "Montserrat", sans-serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 40px;
+    letter-spacing: -0.005em;
+    position: relative;
+  }
+  blockquote::before {
+    content: "“";
+    position: absolute;
+    top: -28px;
+    left: 24px;
+    background: var(--paper);
+    padding: 0 12px;
+    font-family: "Anton", sans-serif;
+    font-size: 80px;
+    line-height: 1;
+  }
+  blockquote cite {
+    display: block;
+    margin-top: 16px;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .twin-img {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin: 40px 0;
+  }
+  .twin-img > div {
+    aspect-ratio: 1 / 1;
+    border: var(--hair) solid var(--ink);
+    background: var(--paper) center/cover no-repeat;
+  }
+  .figure-row {
+    display: flex; justify-content: space-between;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    margin-top: 8px;
+    margin-bottom: 40px;
+  }
+
+  .post-outro {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: var(--hair) solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .post-outro__label { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(51,51,51,0.55); }
+  .post-outro__next {
+    font-family: "Anton", sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .post-outro__next:hover { padding-right: 8px; }
+</style>
+</head>
+<body>
+<main class="page" data-screen-label="02 Post">
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true"></div>
+        <a href="index.html" class="brand__name">Braulio&rsquo;s Journal</a>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Journal</a>
+        <a href="#archive">Archive</a>
+        <a href="#about">About</a>
+        <a href="editor.html" class="btn btn--solid">Write</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="post-wrap">
+
+    <aside class="post-sidebar">
+      <a class="back-link" href="index.html">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+          <path class="arrow-line" d="M10 5H1M5 9 1 5l4-4" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        Back to Journal
+      </a>
+
+      <div class="meta-block">
+        <div class="meta-row"><span class="meta-row__label">Published</span><span class="meta-row__value">Oct 14, 2024</span></div>
+        <div class="meta-row"><span class="meta-row__label">Read time</span><span class="meta-row__value">9 min</span></div>
+        <div class="meta-row"><span class="meta-row__label">Category</span><span class="meta-row__value">Architecture &amp; Design</span></div>
+        <div class="meta-row"><span class="meta-row__label">Author</span><span class="meta-row__value">Braulio</span></div>
+        <div class="meta-row"><span class="meta-row__label">Issue</span><span class="meta-row__value">No. 04</span></div>
+      </div>
+
+      <div class="toc">
+        <span class="toc__label">In this entry</span>
+        <ul class="toc__list">
+          <li><a href="#s1"><span class="n">I</span><span>Honesty in Structure</span></a></li>
+          <li><a href="#s2"><span class="n">II</span><span>The Grid as Canvas</span></a></li>
+          <li><a href="#s3"><span class="n">III</span><span>Field Notes &amp; Details</span></a></li>
+          <li><a href="#s4"><span class="n">IV</span><span>What Comes Next</span></a></li>
+        </ul>
+      </div>
+
+      <div class="share">
+        <span class="share__label">Share</span>
+        <div class="share__row">
+          <a class="share__btn" aria-label="Share link" title="Copy link">
+            <svg viewBox="0 0 20 10" fill="none"><path d="M5 0a5 5 0 0 0 0 10h2v-2H5a3 3 0 1 1 0-6h2V0H5Zm10 0h-2v2h2a3 3 0 1 1 0 6h-2v2h2a5 5 0 0 0 0-10ZM6 4h8v2H6V4Z" fill="currentColor"/></svg>
+          </a>
+          <a class="share__btn" aria-label="Email" title="Email">
+            <svg viewBox="0 0 20 16" fill="none"><path d="M2 0h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2Zm0 4v10h16V4l-8 5L2 4Zm0-2 8 5 8-5H2Z" fill="currentColor"/></svg>
+          </a>
+          <a class="share__btn" aria-label="Bookmark" title="Bookmark">
+            <svg viewBox="0 0 16 20" fill="none"><path d="M2 0h12a2 2 0 0 1 2 2v18l-8-5-8 5V2a2 2 0 0 1 2-2Z" fill="currentColor"/></svg>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <article class="post-body">
+
+      <div class="post-eyebrow">
+        <span class="pill pill--solid">Long Read</span>
+        <span class="pill">Architecture</span>
+        <span>Issue 04 &middot; Entry 12</span>
+      </div>
+
+      <h1 class="post-title">The Brutalist<br/>Resurgence</h1>
+
+      <p class="post-deck">Concrete is back &mdash; and this time, it isn&rsquo;t apologising. A field report on why a generation of architects, photographers, and quiet city walkers have started paying attention to the unloved bones of the post&#8209;war city.</p>
+
+      <div class="hero-img" style="background-image: url('assets/post-hero.png');">
+        <div class="hero-img__cap">
+          <span>Fig. 01 &middot; Kessler Foundation, North Facade</span>
+          <span>Photo &middot; B.A.</span>
+        </div>
+      </div>
+
+      <h2 id="s1"><span class="num">I.</span>Honesty in Structure</h2>
+      <p><span class="dropcap">T</span>he philosophy of brutalism was never merely about concrete; it was an ethical stance. It demanded that a building reveal its structural truths rather than hide behind decorative veneers. Today&rsquo;s practitioners are rediscovering this ethos, applying it not just to municipal structures but to high&#8209;end residential and commercial spaces &mdash; the places we live, the places we work, the small civic rooms in between.</p>
+
+      <blockquote>
+        To design without ornament is to strip away the falsehoods. What remains is the pure dialogue between space, light, and gravity.
+        <cite>— Field notebook, March 2024</cite>
+      </blockquote>
+
+      <p>Consider the recent unveiling of the Kessler Foundation headquarters. The architects eschewed traditional cladding entirely, opting instead for structural elements that perform dual roles as both support and aesthetic focus. The resulting grid&#8209;like facade reads like a blueprint brought into three physical dimensions &mdash; a building that has not bothered to dress up for the meeting.</p>
+
+      <h2 id="s2"><span class="num">II.</span>The Grid as Canvas</h2>
+      <p>Within this paradigm, the grid becomes the supreme organising principle. It is not something to be concealed, but celebrated. By exposing the structural framework, designers create a visual rhythm that grounds the occupant. This approach requires meticulous planning, as every junction, every poured seam, becomes a visible design choice &mdash; and a permanent one.</p>
+
+      <div class="twin-img">
+        <div style="background-image: url('assets/post-detail-1.png');"></div>
+        <div style="background-image: url('assets/post-detail-2.png');"></div>
+      </div>
+      <div class="figure-row">
+        <span>Fig. 02 &middot; Poured Seam, Detail</span>
+        <span>Fig. 03 &middot; Columnar Rhythm</span>
+      </div>
+
+      <h2 id="s3"><span class="num">III.</span>Field Notes &amp; Details</h2>
+      <p>What is striking, walking these buildings, is how loud silence can be. Concrete absorbs and returns sound differently than glass. A footstep in a Le Corbusier stairwell does not echo so much as it confesses. The body adjusts: shoulders lower, conversation hushes, the eye starts to read the wall like text.</p>
+      <p>The colour, too, surprises. We learn to call concrete grey because photography flattens it, but in person it is closer to wet stone, or unbleached linen, or the particular off&#8209;white of an envelope left on a sunny windowsill for a week. It changes by the hour.</p>
+
+      <h2 id="s4"><span class="num">IV.</span>What Comes Next</h2>
+      <p>As we move forward, this brutalist resurgence challenges us to reconsider what we define as &lsquo;premium.&rsquo; It suggests that true luxury lies not in applied decoration, but in the masterful execution of essential forms &mdash; in the enduring presence of architectural mass, and the quiet confidence of a building that does not need to be liked.</p>
+
+      <div class="post-outro">
+        <span class="post-outro__label">Next entry</span>
+        <a href="post.html" class="post-outro__next">
+          Negative Space as Structure
+          <svg width="14" height="14" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M0 5h9M5 1l4 4-4 4" stroke="currentColor" stroke-width="1.4"/></svg>
+        </a>
+      </div>
+
+    </article>
+  </div>
+
+  <footer class="site-footer">
+    <div class="foot-mark" aria-hidden="true"></div>
+    <div class="foot-links">
+      <a href="#about">About</a>
+      <a href="#terms">Terms</a>
+      <a href="#rss">RSS</a>
+      <a href="#colophon">Colophon</a>
+    </div>
+    <div class="foot-copy">© 2024 Braulio &middot; All rights reserved</div>
+  </footer>
+
+</main>
+</body>
+</html>

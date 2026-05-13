@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Editor — Braulio's Journal</title>
+<meta name="viewport" content="width=1280" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .editor-shell { display: grid; grid-template-columns: 1fr 80px; min-height: 1117px; }
+  .editor-main {
+    padding: 64px 64px 64px 64px;
+    border-right: var(--hair) solid var(--ink);
+    display: flex; flex-direction: column; gap: 48px;
+  }
+
+  /* Status strip */
+  .status-strip {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px;
+    border: var(--hair) solid var(--ink);
+    background: var(--ink); color: var(--paper);
+    font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .status-strip .left, .status-strip .right { display: flex; gap: 24px; align-items: center; }
+  .status-strip .dot-live { width: 8px; height: 8px; background: var(--paper); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; display: inline-block; }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  /* Metadata */
+  .meta-area { display: flex; flex-direction: column; gap: 16px; }
+  .meta-area__row { display: flex; gap: 16px; }
+  .field {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 12px 16px; border: var(--hair) solid var(--ink);
+    background: var(--paper); flex: 1;
+  }
+  .field__label { font-weight: 700; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(51,51,51,0.6); }
+  .field input, .field select {
+    background: transparent; border: 0; outline: none;
+    font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.04em;
+    color: var(--ink); padding: 0; width: 100%;
+  }
+  .field--cat { flex: 0 0 240px; }
+  .field--slug { flex: 1; }
+  .field--issue { flex: 0 0 140px; }
+
+  .title-field { padding: 24px; border: var(--hair) solid var(--ink); }
+  .title-field__label { font-weight: 700; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(51,51,51,0.6); margin-bottom: 16px; }
+  .title-input {
+    background: transparent; border: 0; outline: none;
+    font-family: "Anton", sans-serif; font-size: 80px;
+    line-height: 0.92; letter-spacing: -0.02em; text-transform: uppercase;
+    color: var(--ink); width: 100%; padding: 0;
+    resize: none; min-height: 80px;
+    overflow: hidden;
+    display: block;
+  }
+  .title-input::placeholder { color: rgba(51,51,51,0.25); }
+
+  /* Toolbar */
+  .toolbar {
+    display: inline-flex; gap: 4px; align-items: center;
+    padding: 6px;
+    background: var(--paper); border: var(--hair) solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    width: fit-content;
+  }
+  .tb-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 32px; min-width: 32px; padding: 0 8px;
+    background: var(--paper); border: 0; cursor: pointer;
+    font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 13px;
+    letter-spacing: 0.02em; color: var(--ink);
+  }
+  .tb-btn:hover { background: var(--ink); color: var(--paper); }
+  .tb-btn.is-active { background: var(--ink); color: var(--paper); }
+  .tb-btn svg { width: 14px; height: 14px; }
+  .tb-btn:hover svg { color: var(--paper); }
+  .tb-divider { width: 1px; height: 20px; background: var(--ink); margin: 0 4px; opacity: 0.35; }
+
+  /* Content area */
+  .content-area {
+    flex: 1;
+    display: flex; flex-direction: column; gap: 20px;
+    min-height: 520px;
+  }
+  .content-block {
+    font-size: 18px; line-height: 30px;
+    border-left: 3px solid transparent;
+    padding: 4px 12px;
+    transition: border-color 120ms ease, background 120ms ease;
+    position: relative;
+  }
+  .content-block:hover { border-left-color: rgba(51,51,51,0.35); }
+  .content-block.is-focused {
+    border-left-color: var(--ink);
+    background: rgba(51,51,51,0.025);
+  }
+  .content-block[data-type="h2"] {
+    font-family: "Anton", sans-serif;
+    font-size: 48px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin-top: 16px;
+  }
+  .content-block[data-type="quote"] {
+    font-family: "Montserrat", sans-serif;
+    font-style: italic;
+    font-size: 24px;
+    line-height: 36px;
+    padding-left: 24px;
+    border-left: 3px solid var(--ink);
+  }
+  .content-block[data-type="placeholder"] {
+    color: rgba(51,51,51,0.35);
+    font-style: italic;
+  }
+
+  /* Block-type label that appears on focused block */
+  .content-block::after {
+    content: attr(data-typename);
+    position: absolute;
+    top: 6px; right: 0;
+    font-family: "Montserrat", sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(51,51,51,0.4);
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .content-block.is-focused::after { opacity: 1; }
+
+  /* Aside (right utility column) */
+  .editor-aside {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 0;
+    gap: 16px;
+    background: var(--paper);
+  }
+  .aside-btn {
+    width: 48px; height: 48px;
+    display: grid; place-items: center;
+    border: var(--hair) solid transparent;
+    cursor: pointer; color: var(--ink);
+    transition: border-color 120ms, background 120ms;
+  }
+  .aside-btn:hover { border-color: var(--ink); background: var(--paper); }
+  .aside-btn svg { width: 18px; height: 18px; }
+  .aside-divider { width: 32px; height: 1px; background: var(--ink); opacity: 0.3; margin: 8px 0; }
+  .aside-spacer { flex: 1; }
+  .aside-btn--danger { color: var(--accent); border-color: var(--accent); }
+  .aside-btn--danger:hover { background: var(--accent); color: var(--paper); }
+
+  /* Word counter / footer chip */
+  .editor-footstrip {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px;
+    border: var(--hair) solid var(--ink);
+    font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .editor-footstrip .group { display: flex; gap: 32px; }
+</style>
+</head>
+<body>
+<main class="page" data-screen-label="03 Editor">
+
+  <!-- Editor header (variant of site header with Save/Publish CTAs) -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true"></div>
+        <a href="index.html" class="brand__name">Braulio&rsquo;s Journal</a>
+      </div>
+      <nav class="nav">
+        <span style="display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;">
+          <svg width="14" height="11" viewBox="0 0 14 11" fill="none" aria-hidden="true">
+            <path d="M1 6l4 4 8-9" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" fill="none"/>
+          </svg>
+          Saved locally &middot; 12:42
+        </span>
+        <a href="#" class="btn">Save Draft</a>
+        <a href="post.html" class="btn btn--solid">Publish</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="editor-shell">
+
+    <section class="editor-main">
+
+      <!-- Status strip -->
+      <div class="status-strip">
+        <div class="left">
+          <span><span class="dot-live"></span>&nbsp; Draft &middot; Entry 13</span>
+          <span>Autosave on</span>
+        </div>
+        <div class="right">
+          <span>Words 482</span>
+          <span>Read 4 min</span>
+          <span>v 03</span>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="meta-area">
+        <div class="meta-area__row">
+          <label class="field field--cat">
+            <span class="field__label">Section</span>
+            <input value="Architecture &amp; Design" />
+          </label>
+          <label class="field field--slug">
+            <span class="field__label">Slug</span>
+            <input value="/the-brutalist-resurgence" />
+          </label>
+          <label class="field field--issue">
+            <span class="field__label">Issue</span>
+            <input value="No. 04" />
+          </label>
+        </div>
+
+        <div class="title-field">
+          <div class="title-field__label">Headline</div>
+          <input class="title-input" value="The Brutalist Resurgence" />
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar" role="toolbar" aria-label="Formatting">
+        <button class="tb-btn is-active" title="Bold"><b>B</b></button>
+        <button class="tb-btn" title="Italic"><i>I</i></button>
+        <button class="tb-btn" title="Underline" style="text-decoration:underline">U</button>
+        <span class="tb-divider"></span>
+        <button class="tb-btn" title="Heading 1">H1</button>
+        <button class="tb-btn is-active" title="Heading 2">H2</button>
+        <button class="tb-btn" title="Heading 3">H3</button>
+        <span class="tb-divider"></span>
+        <button class="tb-btn" title="Quote">
+          <svg viewBox="0 0 17 12" fill="currentColor"><path d="M0 12V6C0 2.7 1.7.7 5 0v3C3.3 3.7 2.7 4.7 2.7 6H4v6H0Zm9 0V6c0-3.3 1.7-5.3 5-6v3c-1.7.7-2.3 1.7-2.3 3H13v6H9Z"/></svg>
+        </button>
+        <button class="tb-btn" title="Bullet List">•</button>
+        <button class="tb-btn" title="Numbered List">1.</button>
+        <span class="tb-divider"></span>
+        <button class="tb-btn" title="Link">
+          <svg viewBox="0 0 20 10" fill="currentColor"><path d="M5 0a5 5 0 0 0 0 10h2v-2H5a3 3 0 1 1 0-6h2V0H5Zm10 0h-2v2h2a3 3 0 1 1 0 6h-2v2h2a5 5 0 0 0 0-10ZM6 4h8v2H6V4Z"/></svg>
+        </button>
+        <button class="tb-btn" title="Add image">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="1" width="16" height="16"/><circle cx="6" cy="6" r="1.5" fill="currentColor" stroke="none"/><path d="M2 14l4-4 4 4 3-3 4 4"/></svg>
+        </button>
+      </div>
+
+      <!-- Content area -->
+      <div class="content-area">
+        <div class="content-block" data-type="p" data-typename="Paragraph">
+          The philosophy of brutalism was never merely about concrete; it was an ethical stance. It demanded that a building reveal its structural truths rather than hiding behind decorative veneers.
+        </div>
+
+        <div class="content-block is-focused" data-type="h2" data-typename="Heading 2">
+          Honesty in Structure
+        </div>
+
+        <div class="content-block" data-type="p" data-typename="Paragraph">
+          Today&rsquo;s practitioners are rediscovering this ethos, applying it not just to municipal structures but to high-end residential and commercial spaces &mdash; the places we live, the places we work, the small civic rooms in between.
+        </div>
+
+        <div class="content-block" data-type="quote" data-typename="Pull Quote">
+          To design without ornament is to strip away the falsehoods. What remains is the pure dialogue between space, light, and gravity.
+        </div>
+
+        <div class="content-block" data-type="p" data-typename="Paragraph">
+          Consider the recent unveiling of the Kessler Foundation headquarters. The architects eschewed traditional cladding entirely, opting instead for structural elements that perform dual roles as both support and aesthetic focus.
+        </div>
+
+        <div class="content-block" data-type="placeholder" data-typename="New Block">
+          Start writing here, or press &lsquo;/&rsquo; to insert a block&hellip;
+        </div>
+      </div>
+
+      <!-- Editor foot strip -->
+      <div class="editor-footstrip">
+        <div class="group">
+          <span>Markdown &middot; ON</span>
+          <span>Spellcheck &middot; ON</span>
+        </div>
+        <div class="group">
+          <span>482 words</span>
+          <span>2,847 chars</span>
+          <span>4 min read</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Aside utility column -->
+    <aside class="editor-aside" aria-label="Editor tools">
+      <button class="aside-btn" title="Block settings">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="2.5"/><path d="M9 1v3M9 14v3M1 9h3M14 9h3M3.5 3.5l2 2M12.5 12.5l2 2M3.5 14.5l2-2M12.5 5.5l2-2"/></svg>
+      </button>
+      <button class="aside-btn" title="Add media">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="1" width="16" height="16"/><circle cx="6" cy="6" r="1.5" fill="currentColor" stroke="none"/><path d="M2 14l4-4 4 4 3-3 4 4"/></svg>
+      </button>
+      <button class="aside-btn" title="Embed">
+        <svg viewBox="0 0 18 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 1L1 7l5 6M12 1l5 6-5 6"/></svg>
+      </button>
+      <div class="aside-divider"></div>
+      <button class="aside-btn" title="Comments">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1h16v12H6l-5 4V1Z"/></svg>
+      </button>
+      <button class="aside-btn" title="History">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="7"/><path d="M9 4v5l3 2"/></svg>
+      </button>
+      <button class="aside-btn" title="Preview">
+        <svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 6s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z"/><circle cx="9" cy="6" r="2"/></svg>
+      </button>
+      <div class="aside-spacer"></div>
+      <button class="aside-btn aside-btn--danger" title="Delete draft">
+        <svg viewBox="0 0 16 18" fill="currentColor"><path d="M5 0v2H0v2h1l1 13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l1-13h1V2h-5V0H5Zm1 5h2v10H6V5Zm4 0h2v10h-2V5Z"/></svg>
+      </button>
+    </aside>
+
+  </div>
+
+  <footer class="site-footer">
+    <div class="foot-mark" aria-hidden="true"></div>
+    <div class="foot-links">
+      <a href="#about">About</a>
+      <a href="#terms">Terms</a>
+      <a href="#rss">RSS</a>
+      <a href="#colophon">Colophon</a>
+    </div>
+    <div class="foot-copy">© 2024 Braulio &middot; All rights reserved</div>
+  </footer>
+
+</main>
+
+<script>
+  // Lightweight: click a block to focus it
+  document.querySelectorAll('.content-block').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.content-block.is-focused').forEach(el => el.classList.remove('is-focused'));
+      b.classList.add('is-focused');
+    });
+  });
+
+  // Toolbar buttons toggle active state (visual only)
+  document.querySelectorAll('.tb-btn').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('is-active'));
+  });
+</script>
+</body>
+</html>
